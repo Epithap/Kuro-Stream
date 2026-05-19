@@ -67,7 +67,7 @@ const Welcome = () => {
             <span>Platform Hiburan #1 Indonesia</span>
           </div>
           <h1 className="welcome-title">
-            Nusa<span className="text-gradient">Media</span>
+            Kuro<span className="text-gradient">Stream</span>
           </h1>
           <p className="welcome-subtitle">
             Satu tempat untuk semua hiburan anime &amp; manga favoritmu

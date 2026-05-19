@@ -14,14 +14,34 @@ const AnimeDetail = () => {
   const [error, setError] = useState(null);
   const [showAllEp, setShowAllEp] = useState(false);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
+  const [trailerUrl, setTrailerUrl] = useState('');
 
   useEffect(() => {
     const fetchDetail = async () => {
       setIsLoading(true);
       setError(null);
+      setTrailerUrl('');
       try {
         const detailData = await animeSourceManager.getAnimeDetail(id);
         setAnime(detailData);
+        
+        // Fetch trailer URL
+        if (detailData.trailerUrl) {
+          // Convert YouTube standard URL to embed URL if needed
+          let embed = detailData.trailerUrl;
+          if (embed.includes('youtube.com/watch?v=')) {
+            const vId = embed.split('v=')[1]?.split('&')[0];
+            embed = `https://www.youtube.com/embed/${vId}`;
+          }
+          setTrailerUrl(embed);
+        } else {
+          // Fallback YT Search
+          const searchRes = await animeSourceManager.searchYoutubeVideo(`${detailData.title} Official Anime Trailer`);
+          if (searchRes?.embedUrl) {
+            setTrailerUrl(searchRes.embedUrl);
+          }
+        }
+
         if (Array.isArray(detailData.episodes)) {
           setEpisodes(detailData.episodes);
         } else {
@@ -179,6 +199,25 @@ const AnimeDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Official Trailer Section */}
+      {trailerUrl && (
+        <div className="ad-trailer-section">
+          <div className="ad-section-header">
+            <h2>Official Trailer</h2>
+            <span className="ad-trailer-badge">🔴 Trailer</span>
+          </div>
+          <div className="ad-trailer-player-wrapper">
+            <iframe
+              src={trailerUrl}
+              title={`${anime.title} Official Trailer`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="ad-trailer-iframe"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Episode List */}
       {episodes.length > 0 && (

@@ -2,6 +2,7 @@ import { mangadexIdSource } from './sources/mangadex_id';
 import { mangadexEnSource } from './sources/mangadex_en';
 import { doujinSource } from './sources/doujin';
 import { komikcastSource } from './sources/komikcast';
+import { westmangaSource } from './sources/westmanga';
 
 // Secret code to unlock Doujindesu: "openH"
 const DOUJIN_SECRET = 'openH';
@@ -29,6 +30,13 @@ export const lockDoujin = () => {
 
 export const getAvailableSources = () => {
   const sources = [
+    {
+      id: 'westmanga',
+      name: 'WestManga (Sub Indo)',
+      icon: '🔥',
+      description: 'Manga & Manhwa Sub Indo premium dari WestManga',
+      source: westmangaSource
+    },
     {
       id: 'komikcast',
       name: 'Komikcast (Sub Indo)',
@@ -76,7 +84,11 @@ export const refreshSources = () => {
 
 class SourceManager {
   constructor() {
-    const savedSource = localStorage.getItem('active_source');
+    let savedSource = localStorage.getItem('active_source');
+    if (savedSource === 'westmanga') {
+      savedSource = 'komikcast';
+      localStorage.setItem('active_source', 'komikcast');
+    }
     const sources = getAvailableSources();
     this.activeSourceId = savedSource && sources.find(s => s.id === savedSource)
       ? savedSource
@@ -90,9 +102,10 @@ class SourceManager {
   getActiveSource() {
     const sources = getAvailableSources();
     const sourceObj = sources.find(s => s.id === this.activeSourceId);
-    // Fallback if the active source was doujin but got locked
-    if (!sourceObj) {
+    // Fallback if the active source was doujin but got locked or is westmanga
+    if (!sourceObj || this.activeSourceId === 'westmanga') {
       this.activeSourceId = 'komikcast';
+      localStorage.setItem('active_source', 'komikcast');
       return komikcastSource;
     }
     return sourceObj.source;

@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
 import komikcastScraper from './scrapers/komikcast.js';
+import westmangaScraper from './scrapers/westmanga.js';
 import doujinScraper from './scrapers/doujin.js';
 import animeScraper from './scrapers/anime.js';
 
@@ -36,6 +37,34 @@ app.get('/api/komikcast/manga/:slug/chapters', async (req, res) => {
 });
 app.get('/api/komikcast/chapter/:slug', async (req, res) => {
   try { res.json(await komikcastScraper.getChapterPages(req.params.slug)); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── MANGA: WESTMANGA ────────────────────────────────────────────────
+app.get('/api/westmanga/latest', async (req, res) => {
+  try {
+    const page = Math.floor((parseInt(req.query.offset) || 0) / 20) + 1;
+    res.json(await westmangaScraper.getLatest(page));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/westmanga/search', async (req, res) => {
+  try {
+    const page = Math.floor((parseInt(req.query.offset) || 0) / 20) + 1;
+    res.json(await westmangaScraper.search(req.query.q || '', page));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/westmanga/manga/:slug', async (req, res) => {
+  try { res.json(await westmangaScraper.getDetail(req.params.slug)); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/westmanga/manga/:slug/chapters', async (req, res) => {
+  try {
+    const { order = 'desc', limit = 100, offset = 0 } = req.query;
+    res.json(await westmangaScraper.getMangaChapters(req.params.slug, order, parseInt(limit), parseInt(offset)));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/westmanga/chapter/:slug', async (req, res) => {
+  try { res.json(await westmangaScraper.getChapterPages(req.params.slug)); }
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -127,6 +156,52 @@ app.post('/api/anime/resolve-stream', async (req, res) => {
   }
 });
 
+// ─── YOUTUBE DYNAMIC SEARCH FALLBACK SCRAPER ──────────────────────────
+app.get('/api/youtube/search', async (req, res) => {
+  try {
+    const query = req.query.q || '';
+    if (!query) {
+      return res.status(400).json({ error: 'Missing query parameter q' });
+    }
+    
+    console.log(`[YouTube Scraper] Searching: "${query}"`);
+    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+    
+    const response = await axios.get(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7'
+      },
+      timeout: 10000
+    });
+
+    const html = response.data;
+    // Extract video ID using regex that matches the standard YouTube video watch links
+    const matches = html.match(/\/watch\?v=([a-zA-Z0-9_-]{11})/g);
+    
+    if (matches && matches.length > 0) {
+      // Get the first unique match to avoid double selections
+      const uniqueIds = [...new Set(matches.map(m => m.split('v=')[1]))];
+      // Filter out standard non-video IDs if any (length should be exactly 11)
+      const validId = uniqueIds.find(id => id && id.length === 11);
+      
+      if (validId) {
+        console.log(`[YouTube Scraper] Resolved top result: ${validId}`);
+        return res.json({
+          videoId: validId,
+          embedUrl: `https://www.youtube.com/embed/${validId}?autoplay=1&rel=0`
+        });
+      }
+    }
+    
+    throw new Error('No YouTube videos resolved for this query');
+  } catch (error) {
+    console.error('YouTube Search Scraper failed:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.listen(PORT, () => {
-  console.log(`🚀 NusaManga Backend running on http://localhost:${PORT}`);
+  console.log(`🚀 KuroStream Backend running on http://localhost:${PORT}`);
 });

@@ -47,7 +47,7 @@ const Navbar = () => {
               <BookOpen size={24} />
             </div>
             <h1 className="brand-text">
-              Nusa<span className="text-gradient">Media</span>
+              Kuro<span className="text-gradient">Stream</span>
             </h1>
           </Link>
 

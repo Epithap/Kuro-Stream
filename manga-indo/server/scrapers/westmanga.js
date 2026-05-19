@@ -34,8 +34,8 @@ const httpsAgent = new https.Agent({ lookup: customLookup });
 // Create an axios instance with the custom agent
 const api = axios.create({ httpsAgent });
 
-// URL sering berubah, update jika perlu
-const BASE_URL = 'https://komikcast.life';
+// Live WestManga Domain
+const BASE_URL = 'https://westmanga.site';
 
 const getHeaders = () => ({
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -43,14 +43,14 @@ const getHeaders = () => ({
   'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
 });
 
-// Helper untuk mengekstrak slug dari URL Komikcast
+// Helper to extract slug from WestManga URLs
 const extractSlug = (url) => {
   if (!url) return '';
   const parts = url.split('/').filter(p => p.length > 0);
   return parts[parts.length - 1];
 };
 
-const komikcastScraper = {
+const westmangaScraper = {
   getLatest: async (page = 1) => {
     try {
       const url = page === 1 ? `${BASE_URL}/manga/?status=&type=&order=update` : `${BASE_URL}/manga/page/${page}/?status=&type=&order=update`;
@@ -81,9 +81,9 @@ const komikcastScraper = {
         }
       });
       
-      return { data: mangas, total: 1000, offset: (page - 1) * 20 }; // Fake total
+      return { data: mangas, total: 1000, offset: (page - 1) * 20 };
     } catch (error) {
-      throw new Error(`Scraper Error: ${error.message}`);
+      throw new Error(`WestManga getLatest Error: ${error.message}`);
     }
   },
 
@@ -119,7 +119,7 @@ const komikcastScraper = {
       
       return { data: mangas, total: 100, offset: (page - 1) * 20 };
     } catch (error) {
-      throw new Error(`Scraper Error: ${error.message}`);
+      throw new Error(`WestManga search Error: ${error.message}`);
     }
   },
 
@@ -130,12 +130,12 @@ const komikcastScraper = {
       const $ = cheerio.load(response.data);
       
       const title = $('h1').first().text().trim();
-      const coverUrl = $('.thumb img, .thumbook img').attr('data-src') || $('.thumb img, .thumbook img').attr('src') || '';
-      const synopsis = $('.entry-content').text().trim();
+      const coverUrl = $('.thumb img, .thumbook img, .post-thumbnail img').first().attr('data-src') || $('.thumb img, .thumbook img, .post-thumbnail img').first().attr('src') || '';
+      const synopsis = $('.entry-content, .sinopsis, .description').text().trim();
       const status = $('.imptdt:contains("Status") i').text().trim() || 'Unknown';
       
       const tags = [];
-      $('.mgen a').each((i, el) => {
+      $('.mgen a, .genres-content a').each((i, el) => {
         tags.push($(el).text().trim());
       });
 
@@ -149,7 +149,7 @@ const komikcastScraper = {
         tags
       };
     } catch (error) {
-      throw new Error(`Scraper Error: ${error.message}`);
+      throw new Error(`WestManga getDetail Error: ${error.message}`);
     }
   },
 
@@ -160,32 +160,28 @@ const komikcastScraper = {
       const $ = cheerio.load(response.data);
       
       const pages = [];
-      const seenUrls = new Set();
       $('#readerarea img, #chapter_imgs img, .main-reading-area img').each((i, el) => {
-        let src = $(el).attr('data-src') || $(el).attr('src') || '';
-        src = src.trim();
-        if (src && !src.startsWith('data:image') && !seenUrls.has(src)) {
-          seenUrls.add(src);
-          pages.push(src);
+        const src = $(el).attr('data-src') || $(el).attr('src');
+        if (src && !src.startsWith('data:image')) {
+          pages.push(src.trim());
         }
       });
       
       return pages;
     } catch (error) {
-      throw new Error(`Scraper Error: ${error.message}`);
+      throw new Error(`WestManga getChapterPages Error: ${error.message}`);
     }
   }
 };
 
-// Also add a chapter fetching method that is separated or part of detail
-komikcastScraper.getMangaChapters = async (slug, order = 'desc', limit = 100, offset = 0) => {
+westmangaScraper.getMangaChapters = async (slug, order = 'desc', limit = 100, offset = 0) => {
   try {
     const url = `${BASE_URL}/manga/${slug}/`;
     const response = await api.get(url, { headers: getHeaders() });
     const $ = cheerio.load(response.data);
     
     let chapters = [];
-    $('#chapterlist ul li, .komik_info-chapters-item').each((i, el) => {
+    $('#chapterlist ul li, .cl ul li, .komik_info-chapters-item').each((i, el) => {
       const chTitle = $(el).find('a').first().text().trim();
       const chUrl = $(el).find('a').first().attr('href');
       const chSlug = extractSlug(chUrl);
@@ -196,10 +192,10 @@ komikcastScraper.getMangaChapters = async (slug, order = 'desc', limit = 100, of
       
       if (chSlug) {
         chapters.push({
-          id: chSlug, // for komikcast, id is the chapter slug
+          id: chSlug,
           chapter: chNum,
           title: chTitle,
-          pages: 1, // dummy value to indicate it's not external
+          pages: 1,
           externalUrl: null
         });
       }
@@ -218,8 +214,8 @@ komikcastScraper.getMangaChapters = async (slug, order = 'desc', limit = 100, of
       offset
     };
   } catch (error) {
-    throw new Error(`Scraper Error: ${error.message}`);
+    throw new Error(`WestManga getMangaChapters Error: ${error.message}`);
   }
 };
 
-export default komikcastScraper;
+export default westmangaScraper;

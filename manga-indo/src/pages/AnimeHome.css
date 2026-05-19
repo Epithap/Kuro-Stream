@@ -170,3 +170,235 @@
     gap: 1rem;
   }
 }
+
+/* ==========================================================================
+   NETFLIX BILLBOARD STYLES
+   ========================================================================== */
+.anime-billboard {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  max-height: 520px;
+  min-height: 380px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: flex-end;
+}
+
+.anime-billboard-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 20%;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), background-image 0.5s ease-in-out;
+}
+
+.anime-billboard:hover .anime-billboard-bg {
+  transform: scale(1.03);
+}
+
+.billboard-overlay-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, #09090b 5%, rgba(9, 9, 11, 0.6) 40%, rgba(9, 9, 11, 0) 70%),
+              linear-gradient(90deg, #09090b 10%, rgba(9, 9, 11, 0.4) 40%, rgba(9, 9, 11, 0) 70%);
+  pointer-events: none;
+}
+
+.billboard-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  max-width: 650px;
+  padding: 3rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-sizing: border-box;
+}
+
+.billboard-badge {
+  display: inline-block;
+  align-self: flex-start;
+  background: var(--accent-gradient);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+}
+
+.billboard-title {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -1px;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+  line-height: 1.1;
+}
+
+.billboard-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  flex-wrap: wrap;
+}
+
+.billboard-rating {
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+.billboard-divider {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.billboard-studio {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.billboard-synopsis {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.billboard-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.billboard-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-play {
+  background: #fff;
+  color: #000;
+}
+
+.btn-play:hover {
+  background: rgba(255, 255, 255, 0.85);
+  transform: scale(1.05);
+}
+
+.btn-info {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-info:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.billboard-sound-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.billboard-sound-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+  .anime-billboard {
+    aspect-ratio: 4/3;
+    max-height: 420px;
+  }
+  
+  .billboard-content {
+    padding: 1.5rem;
+    max-width: 100%;
+  }
+  
+  .billboard-title {
+    font-size: 2rem;
+  }
+  
+  .billboard-synopsis {
+    font-size: 0.85rem;
+    -webkit-line-clamp: 2;
+  }
+  
+  .billboard-btn {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Anime Billboard Dots */
+.anime-billboard-dots {
+  position: absolute;
+  right: 3rem;
+  bottom: 2rem;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+}
+
+.anime-billboard-dots .billboard-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0;
+}
+
+.anime-billboard-dots .billboard-dot:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.anime-billboard-dots .billboard-dot.active {
+  background: #fff;
+  width: 26px;
+  border-radius: 10px;
+}

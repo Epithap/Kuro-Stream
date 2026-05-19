@@ -25,6 +25,7 @@ const mapJikanAnime = (anime) => ({
   tags: (anime.genres || []).map(g => g.name),
   year: anime.year,
   studios: (anime.studios || []).map(s => s.name),
+  trailerUrl: anime.trailer?.embed_url || anime.trailer?.url || null,
   source: 'jikan'
 });
 
@@ -138,6 +139,16 @@ export const animeSourceManager = {
       return res.data; // returns { embedUrl }
     } catch (e) {
       console.error('Failed to resolve episode stream:', e.message);
+      return null;
+    }
+  },
+
+  searchYoutubeVideo: async (query) => {
+    try {
+      const res = await axios.get(`http://localhost:3001/api/youtube/search`, { params: { q: query }, timeout: 10000 });
+      return res.data; // returns { videoId, embedUrl }
+    } catch (e) {
+      console.error('Failed to search youtube fallback video:', e.message);
       return null;
     }
   }

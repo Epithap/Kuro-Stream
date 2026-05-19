@@ -28,12 +28,16 @@ const WatchAnime = () => {
   const [isResolving,    setIsResolving]    = useState(false);
   const [allEpisodes,    setAllEpisodes]    = useState([]);
   const [showSidebar,    setShowSidebar]    = useState(true);
+  const [isYtFallback,   setIsYtFallback]   = useState(false);
+  const [ytOriginalUrl,  setYtOriginalUrl]  = useState('');
 
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
       setEmbedUrl('');
       setQualities({});
+      setIsYtFallback(false);
+      setYtOriginalUrl('');
       try {
         const data = await animeSourceManager.getEpisodeStream(episodeId);
         if (data.embedUrl) setEmbedUrl(data.embedUrl);
@@ -59,7 +63,25 @@ const WatchAnime = () => {
     load();
   }, [episodeId, animeId]);
 
+  const handleYtFallback = async () => {
+    setIsYtFallback(true);
+    setIsResolving(true);
+    try {
+      const query = `${animeTitle} Episode ${epNum} Sub Indo`;
+      const res = await animeSourceManager.searchYoutubeVideo(query);
+      if (res?.embedUrl) {
+        setEmbedUrl(res.embedUrl);
+        setYtOriginalUrl(`https://www.youtube.com/watch?v=${res.videoId}`);
+      }
+    } catch (e) {
+      console.error('Failed to load YouTube fallback:', e);
+    } finally {
+      setIsResolving(false);
+    }
+  };
+
   const handleMirror = async (quality, mirror) => {
+    setIsYtFallback(false);
     setSelectedQ(quality);
     setActiveMirror(mirror.name);
     setIsResolving(true);
@@ -157,37 +179,74 @@ const WatchAnime = () => {
           </div>
 
           {/* Quality + Mirror selector */}
-          {hasQ && (
+          {(hasQ || true) && (
             <div className="wa-servers-panel">
-              <div className="wa-panel-title">
-                <Wifi size={15} />
-                <span>Server & Kualitas</span>
-              </div>
-              <div className="wa-quality-row">
-                {Object.keys(qualities).map(q => (
-                  <button
-                    key={q}
-                    className={`wa-q-pill ${selectedQ === q ? 'active' : ''}`}
-                    onClick={() => {
-                      const mirrors = qualities[q] || [];
-                      if (mirrors.length) handleMirror(q, mirrors[0]);
-                    }}
+              <div className="wa-panel-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Wifi size={15} />
+                  <span>Server & Kualitas</span>
+                </div>
+                {isYtFallback && ytOriginalUrl && (
+                  <a
+                    href={ytOriginalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontSize: '12px', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'underline' }}
                   >
-                    {q}
-                  </button>
-                ))}
+                    <ExternalLink size={12} /> Buka di YouTube
+                  </a>
+                )}
               </div>
-              <div className="wa-mirror-row">
-                {(qualities[selectedQ] || []).map((m, i) => (
+              
+              {hasQ && (
+                <div className="wa-quality-row">
+                  {Object.keys(qualities).map(q => (
+                    <button
+                      key={q}
+                      className={`wa-q-pill ${!isYtFallback && selectedQ === q ? 'active' : ''}`}
+                      onClick={() => {
+                        setIsYtFallback(false);
+                        const mirrors = qualities[q] || [];
+                        if (mirrors.length) handleMirror(q, mirrors[0]);
+                      }}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              <div className="wa-mirror-row" style={{ flexWrap: 'wrap', gap: '8px' }}>
+                {hasQ && !isYtFallback && (qualities[selectedQ] || []).map((m, i) => (
                   <button
                     key={i}
                     className={`wa-mirror-btn ${activeMirror === m.name ? 'active' : ''}`}
-                    onClick={() => handleMirror(selectedQ, m)}
+                    onClick={() => {
+                      setIsYtFallback(false);
+                      handleMirror(selectedQ, m);
+                    }}
                   >
                     {m.isDefault && <span className="wa-dot" />}
                     {m.name}
                   </button>
                 ))}
+                
+                <button
+                  className={`wa-mirror-btn yt-fallback-btn ${isYtFallback ? 'active' : ''}`}
+                  onClick={handleYtFallback}
+                  style={{
+                    background: isYtFallback ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'rgba(239, 68, 68, 0.1)',
+                    color: isYtFallback ? '#fff' : '#ef4444',
+                    borderColor: 'rgba(239, 68, 68, 0.3)',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span className="wa-dot" style={{ background: '#ef4444', display: isYtFallback ? 'none' : 'inline-block' }} />
+                  🔴 YouTube Fallback (Muse/Ani-One)
+                </button>
               </div>
             </div>
           )}
