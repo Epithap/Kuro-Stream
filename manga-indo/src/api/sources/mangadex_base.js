@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://api.mangadex.dev';
-const UPLOADS_URL = 'https://uploads.mangadex.dev';
+const BASE_URL = 'https://api.mangadex.org';
+const UPLOADS_URL = 'https://uploads.mangadex.org';
 
 export const createMangaDexSource = (langCode) => {
   return {

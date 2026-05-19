@@ -74,6 +74,8 @@ const Welcome = () => {
           </p>
         </div>
 
+
+
         {/* Mode Cards */}
         <div className="mode-cards">
           {/* Manga Card */}

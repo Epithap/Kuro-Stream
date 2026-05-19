@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { sourceManager } from '../api/sourceManager';
 import { BookOpen, List, Globe2, ArrowUpDown, ExternalLink, ChevronDown } from 'lucide-react';
+import { myAnimeList } from '../api/myAnimeList';
+import RatingStars from '../components/RatingStars';
 import './MangaDetail.css';
 
 const MangaDetail = () => {
@@ -27,6 +29,16 @@ const MangaDetail = () => {
         const mangaData = await sourceManager.getMangaDetail(id);
         const chapterData = await sourceManager.getMangaChapters(id, sortOrder, LIMIT, 0);
         
+        // Fetch MyAnimeList rating dynamically
+        try {
+          const malResults = await myAnimeList.searchManga(mangaData.title);
+          if (malResults && malResults.length > 0) {
+            mangaData.rating = malResults[0].rating;
+          }
+        } catch (e) {
+          console.warn('Failed to fetch MyAnimeList rating for manga', e);
+        }
+
         setManga(mangaData);
         setChapters(chapterData.data);
         setTotalChapters(chapterData.total);
@@ -98,6 +110,11 @@ const MangaDetail = () => {
           <div className="detail-meta">
             <span className="status-badge">{manga.status}</span>
             <span className="language-badge"><Globe2 size={14} /> {langLabel}</span>
+            {manga.rating && (
+              <span className="rating-badge">
+                <RatingStars rating={Number(manga.rating)} />
+              </span>
+            )}
           </div>
           
           <div className="detail-tags">

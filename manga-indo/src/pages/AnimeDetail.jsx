@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { animeSourceManager } from '../api/animeManager';
 import { ArrowLeft, Play, Star, ChevronDown } from 'lucide-react';
+import RatingStars from '../components/RatingStars';
 import './AnimeDetail.css';
 
 const AnimeDetail = () => {
@@ -141,8 +142,7 @@ const AnimeDetail = () => {
                 </span>
                 {anime.score && (
                   <span className="ad-score">
-                    <Star size={13} fill="#fbbf24" color="#fbbf24" />
-                    {anime.score}
+                    <RatingStars rating={Number(anime.score)} />
                   </span>
                 )}
                 {anime.year && <span className="ad-badge">{anime.year}</span>}

@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { sourceManager } from '../api/sourceManager';
 import MangaCard from '../components/MangaCard';
 import { TrendingUp, Search as SearchIcon, BookOpen, Info } from 'lucide-react';
+import PopularBanner from '../components/PopularBanner';
 import './Home.css';
 
 const BILLBOARD_SLIDES = [
@@ -44,30 +45,60 @@ const Home = () => {
   
   const [mangas, setMangas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Reset list and pagination when search query changes
+  useEffect(() => {
+    setMangas([]);
+    setOffset(0);
+    setHasMore(true);
+  }, [searchQuery]);
 
   useEffect(() => {
     const fetchMangas = async () => {
-      setLoading(true);
+      if (offset === 0) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
       setError(null);
       try {
         let data;
         if (searchQuery) {
-          data = await sourceManager.searchManga(searchQuery);
+          data = await sourceManager.searchManga(searchQuery, 20, offset);
         } else {
-          data = await sourceManager.getTrendingManga();
+          data = await sourceManager.getTrendingManga(20, offset);
         }
-        setMangas(data.data);
+        
+        const newMangas = data.data || [];
+        if (newMangas.length < 20) {
+          setHasMore(false);
+        }
+        
+        if (offset === 0) {
+          setMangas(newMangas);
+        } else {
+          setMangas(prev => {
+            // Filter out duplicates just in case
+            const existingIds = new Set(prev.map(m => m.id));
+            const filtered = newMangas.filter(m => !existingIds.has(m.id));
+            return [...prev, ...filtered];
+          });
+        }
       } catch (err) {
         setError('Gagal memuat data manga. Silakan coba lagi nanti.');
       } finally {
         setLoading(false);
+        setLoadingMore(false);
       }
     };
 
     fetchMangas();
-  }, [searchQuery]);
+  }, [searchQuery, offset]);
 
   // Rotating slide interval every 5 seconds
   useEffect(() => {
@@ -80,49 +111,17 @@ const Home = () => {
 
   const slide = BILLBOARD_SLIDES[currentSlide];
 
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      setOffset(prev => prev + 20);
+    }
+  };
+
   return (
     <div className="home-container animate-fade-in">
       {/* Dynamic Manga Billboard */}
       {!searchQuery && (
-        <section className="manga-billboard">
-          <div 
-            className="manga-billboard-bg" 
-            style={{ backgroundImage: `url('${slide.image}')` }}
-          />
-          <div className="manga-billboard-overlay" />
-          <div className="manga-billboard-content">
-            <span className="manga-billboard-badge">{slide.badge}</span>
-            <h1 className="manga-billboard-title">{slide.title}</h1>
-            <div className="manga-billboard-meta">
-              <span className="manga-billboard-status">{slide.status}</span>
-              <span className="manga-billboard-divider">•</span>
-              <span>{slide.info}</span>
-            </div>
-            <p className="manga-billboard-synopsis">{slide.synopsis}</p>
-            <div className="manga-billboard-controls">
-              <Link to={slide.link} className="manga-billboard-btn btn-read">
-                <BookOpen size={18} fill="currentColor" />
-                <span>Baca Sekarang</span>
-              </Link>
-              <Link to={slide.link} className="manga-billboard-btn btn-details">
-                <Info size={18} />
-                <span>Detail Manga</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Slide dots indicators */}
-          <div className="manga-billboard-dots">
-            {BILLBOARD_SLIDES.map((_, index) => (
-              <button
-                key={index}
-                className={`billboard-dot ${currentSlide === index ? 'active' : ''}`}
-                onClick={() => setCurrentSlide(index)}
-                aria-label={`Slide ${index + 1}`}
-              />
-            ))}
-          </div>
-        </section>
+        <PopularBanner type="manga" />
       )}
 
       {/* Main Content */}
@@ -150,11 +149,49 @@ const Home = () => {
             ))}
           </div>
         ) : mangas.length > 0 ? (
-          <div className="manga-grid">
-            {mangas.map((manga) => (
-              <MangaCard key={manga.id} manga={manga} />
-            ))}
-          </div>
+          <>
+            <div className="manga-grid">
+              {mangas.map((manga) => (
+                <MangaCard key={manga.id} manga={manga} />
+              ))}
+            </div>
+
+            {/* Premium Load More Controls */}
+            {hasMore && (
+              <div className="load-more-container" style={{ display: 'flex', justifyContent: 'center', margin: '40px 0 20px' }}>
+                <button 
+                  className="load-more-btn"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: '#fff',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    padding: '12px 35px',
+                    borderRadius: '50px',
+                    fontSize: '0.95rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    transition: 'all 0.25s ease',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.16)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                  }}
+                >
+                  {loadingMore ? 'Memuat...' : 'Muat Lebih Banyak Manga'}
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="empty-state">
             <p>Tidak ada manga ditemukan.</p>

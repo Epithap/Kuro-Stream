@@ -32,6 +32,12 @@
   --header-height: 70px;
 }
 
+@media (max-width: 768px) {
+  :root {
+    --header-height: 120px;
+  }
+}
+
 * {
   margin: 0;
   padding: 0;

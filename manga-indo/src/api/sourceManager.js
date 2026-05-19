@@ -84,11 +84,7 @@ export const refreshSources = () => {
 
 class SourceManager {
   constructor() {
-    let savedSource = localStorage.getItem('active_source');
-    if (savedSource === 'westmanga') {
-      savedSource = 'komikcast';
-      localStorage.setItem('active_source', 'komikcast');
-    }
+    const savedSource = localStorage.getItem('active_source');
     const sources = getAvailableSources();
     this.activeSourceId = savedSource && sources.find(s => s.id === savedSource)
       ? savedSource
@@ -102,8 +98,7 @@ class SourceManager {
   getActiveSource() {
     const sources = getAvailableSources();
     const sourceObj = sources.find(s => s.id === this.activeSourceId);
-    // Fallback if the active source was doujin but got locked or is westmanga
-    if (!sourceObj || this.activeSourceId === 'westmanga') {
+    if (!sourceObj) {
       this.activeSourceId = 'komikcast';
       localStorage.setItem('active_source', 'komikcast');
       return komikcastSource;

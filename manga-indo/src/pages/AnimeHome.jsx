@@ -4,6 +4,7 @@ import { animeSourceManager } from '../api/animeManager';
 import { Play, Tv, Info } from 'lucide-react';
 import './AnimeHome.css';
 import TrendingCarousel from '../components/TrendingCarousel';
+import PopularBanner from '../components/PopularBanner';
 
 const ANIME_BILLBOARD_SLIDES = [
   {
@@ -45,30 +46,59 @@ const AnimeHome = () => {
   const [animes, setAnimes] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [source, setSource] = useState('');
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Reset list and pagination when search query changes
+  useEffect(() => {
+    setAnimes([]);
+    setOffset(0);
+    setHasMore(true);
+  }, [searchQuery]);
 
   useEffect(() => {
     const fetchAnime = async () => {
-      setIsLoading(true);
+      if (offset === 0) {
+        setIsLoading(true);
+      } else {
+        setIsLoadingMore(true);
+      }
       setError(null);
       try {
         let result;
         if (searchQuery) {
-          result = await animeSourceManager.searchAnime(searchQuery);
+          result = await animeSourceManager.searchAnime(searchQuery, offset);
         } else {
-          result = await animeSourceManager.getLatestAnime();
+          result = await animeSourceManager.getLatestAnime(offset);
         }
-        setAnimes(result.data);
+        
+        const newAnimes = result.data || [];
+        if (newAnimes.length < 24) {
+          setHasMore(false);
+        }
+
+        if (offset === 0) {
+          setAnimes(newAnimes);
+        } else {
+          setAnimes(prev => {
+            const existingIds = new Set(prev.map(a => a.id));
+            const filtered = newAnimes.filter(a => !existingIds.has(a.id));
+            return [...prev, ...filtered];
+          });
+        }
         setSource(result.source);
       } catch (err) {
         setError(err.message);
       } finally {
         setIsLoading(false);
+        setIsLoadingMore(false);
       }
     };
     fetchAnime();
-  }, [searchQuery]);
+  }, [searchQuery, offset]);
 
   // Rotating slide interval every 5 seconds
   useEffect(() => {
@@ -81,49 +111,17 @@ const AnimeHome = () => {
 
   const slide = ANIME_BILLBOARD_SLIDES[currentSlide];
 
+  const handleLoadMore = () => {
+    if (!isLoadingMore && hasMore) {
+      setOffset(prev => prev + 24);
+    }
+  };
+
   return (
     <div className="anime-home animate-fade-in">
       {/* Dynamic Widescreen Billboard */}
       {!searchQuery && (
-        <div className="anime-billboard">
-          <div 
-            className="anime-billboard-bg" 
-            style={{ backgroundImage: `url('${slide.image}')` }}
-          />
-          <div className="billboard-overlay-gradient" />
-          <div className="billboard-content">
-            <span className="billboard-badge">{slide.badge}</span>
-            <h1 className="billboard-title">{slide.title}</h1>
-            <div className="billboard-meta">
-              <span className="billboard-rating">{slide.rating}</span>
-              <span className="billboard-divider">•</span>
-              <span>{slide.info}</span>
-            </div>
-            <p className="billboard-synopsis">{slide.synopsis}</p>
-            <div className="billboard-controls">
-              <Link to={slide.link} className="billboard-btn btn-play">
-                <Play fill="currentColor" size={18} />
-                <span>Tonton Sekarang</span>
-              </Link>
-              <Link to={slide.link} className="billboard-btn btn-info">
-                <Info size={18} />
-                <span>Info Detail</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Slide dots indicators */}
-          <div className="anime-billboard-dots">
-            {ANIME_BILLBOARD_SLIDES.map((_, index) => (
-              <button
-                key={index}
-                className={`billboard-dot ${currentSlide === index ? 'active' : ''}`}
-                onClick={() => setCurrentSlide(index)}
-                aria-label={`Slide ${index + 1}`}
-              />
-            ))}
-          </div>
-        </div>
+        <PopularBanner type="anime" />
       )}
 
       {/* Top Trending Carousel */}
@@ -140,7 +138,7 @@ const AnimeHome = () => {
           </div>
           {source && (
             <span className={`source-badge ${source === 'otakudesu' ? 'badge-indo' : 'badge-global'}`}>
-              {source === 'otakudesu' ? '🇮🇩 Otakudesu' : '🌏 MyAnimeList'}
+              {source === 'otakudesu' ? '🇮🇩 Otakudesu' : source === 'anilist' ? '🌏 AniList' : '🌏 MyAnimeList'}
             </span>
           )}
         </div>
@@ -157,41 +155,79 @@ const AnimeHome = () => {
             <p>Memuat data anime...</p>
           </div>
         ) : (
-          <div className="anime-grid">
-            {animes.length > 0 ? (
-              animes.map((anime) => (
-                <Link to={`/anime/${anime.id}`} key={anime.id} className="anime-card">
-                  <div className="anime-cover-wrapper">
-                    <img src={anime.coverUrl} alt={anime.title} className="anime-cover" loading="lazy" />
-                    <div className="anime-overlay">
-                      <div className="play-icon-wrapper">
-                        <Play fill="white" size={24} />
+          <>
+            <div className="anime-grid">
+              {animes.length > 0 ? (
+                animes.map((anime) => (
+                  <Link to={`/anime/${anime.id}`} key={anime.id} className="anime-card">
+                    <div className="anime-cover-wrapper">
+                      <img src={anime.coverUrl} alt={anime.title} className="anime-cover" loading="lazy" />
+                      <div className="anime-overlay">
+                        <div className="play-icon-wrapper">
+                          <Play fill="white" size={24} />
+                        </div>
+                      </div>
+                      {anime.score && <div className="anime-score">★ {anime.score}</div>}
+                      {anime.episodes && (
+                        <div className="anime-episodes">
+                          {typeof anime.episodes === 'number' ? `${anime.episodes} Ep` : anime.episodes}
+                        </div>
+                      )}
+                    </div>
+                    <div className="anime-info">
+                      <h3 className="anime-title">{anime.title}</h3>
+                      <div className="anime-tags">
+                        {anime.tags && anime.tags.slice(0, 2).map((tag, i) => (
+                          <span key={i} className="anime-tag">{tag}</span>
+                        ))}
+                        {anime.status && <span className="anime-tag anime-status">{anime.status}</span>}
                       </div>
                     </div>
-                    {anime.score && <div className="anime-score">★ {anime.score}</div>}
-                    {anime.episodes && (
-                      <div className="anime-episodes">
-                        {typeof anime.episodes === 'number' ? `${anime.episodes} Ep` : anime.episodes}
-                      </div>
-                    )}
-                  </div>
-                  <div className="anime-info">
-                    <h3 className="anime-title">{anime.title}</h3>
-                    <div className="anime-tags">
-                      {anime.tags && anime.tags.slice(0, 2).map((tag, i) => (
-                        <span key={i} className="anime-tag">{tag}</span>
-                      ))}
-                      {anime.status && <span className="anime-tag anime-status">{anime.status}</span>}
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="empty-state glass-panel">
-                <p>Tidak ada anime yang ditemukan.</p>
+                  </Link>
+                ))
+              ) : (
+                <div className="empty-state glass-panel">
+                  <p>Tidak ada anime yang ditemukan.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Premium Load More Controls */}
+            {hasMore && animes.length > 0 && (
+              <div className="load-more-container" style={{ display: 'flex', justifyContent: 'center', margin: '40px 0 20px' }}>
+                <button 
+                  className="load-more-btn"
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: '#fff',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    padding: '12px 35px',
+                    borderRadius: '50px',
+                    fontSize: '0.95rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    transition: 'all 0.25s ease',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.16)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                  }}
+                >
+                  {isLoadingMore ? 'Memuat...' : 'Muat Lebih Banyak Anime'}
+                </button>
               </div>
             )}
-          </div>
+          </>
         )}
       </section>
     </div>

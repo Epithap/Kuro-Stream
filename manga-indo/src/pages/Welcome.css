@@ -6,8 +6,9 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
   background: #08080f;
+  padding: 60px 20px;
 }
 
 /* Animated BG */
