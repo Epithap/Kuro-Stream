@@ -32,31 +32,10 @@ export const getAvailableSources = () => {
   const sources = [
     {
       id: 'westmanga',
-      name: 'WestManga (Sub Indo)',
+      name: 'WestManga.co (Sub Indo)',
       icon: '🔥',
-      description: 'Manga & Manhwa Sub Indo premium dari WestManga',
+      description: 'Manga & Manhwa terlengkap dari WestManga.co',
       source: westmangaSource
-    },
-    {
-      id: 'komikcast',
-      name: 'Komikcast (Sub Indo)',
-      icon: '⚡',
-      description: 'Manga & Manhwa Sub Indo lengkap dari Komikcast',
-      source: komikcastSource
-    },
-    {
-      id: 'mangadex_id',
-      name: 'MangaDex (Sub Indo)',
-      icon: '🇮🇩',
-      description: 'Jutaan manga Sub Indo dari MangaDex',
-      source: mangadexIdSource
-    },
-    {
-      id: 'mangadex_en',
-      name: 'MangaDex (English)',
-      icon: '🌏',
-      description: 'Koleksi manga Inggris dari MangaDex',
-      source: mangadexEnSource
     }
   ];
 
@@ -88,7 +67,7 @@ class SourceManager {
     const sources = getAvailableSources();
     this.activeSourceId = savedSource && sources.find(s => s.id === savedSource)
       ? savedSource
-      : 'komikcast';
+      : 'westmanga';
   }
 
   getActiveSourceId() {
@@ -99,9 +78,9 @@ class SourceManager {
     const sources = getAvailableSources();
     const sourceObj = sources.find(s => s.id === this.activeSourceId);
     if (!sourceObj) {
-      this.activeSourceId = 'komikcast';
-      localStorage.setItem('active_source', 'komikcast');
-      return komikcastSource;
+      this.activeSourceId = 'westmanga';
+      localStorage.setItem('active_source', 'westmanga');
+      return westmangaSource;
     }
     return sourceObj.source;
   }

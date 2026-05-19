@@ -67,6 +67,14 @@ app.get('/api/westmanga/chapter/:slug', async (req, res) => {
   try { res.json(await westmangaScraper.getChapterPages(req.params.slug)); }
   catch (e) { res.status(500).json({ error: e.message }); }
 });
+app.get('/api/westmanga/popular', async (req, res) => {
+  try {
+    const page = Math.floor((parseInt(req.query.offset) || 0) / 20) + 1;
+    res.json(await westmangaScraper.getPopular(page));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // ─── MANGA: DOUJINDESU (SECRET SOURCE) ──────────────────────────────
 app.get('/api/doujin/latest', async (req, res) => {

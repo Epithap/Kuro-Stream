@@ -8,26 +8,41 @@ import { Link } from 'react-router-dom';
 
 const AUTO_ROTATE_INTERVAL = 8000; // 8 seconds
 
-const PopularBanner = ({ type }) => {
+import { westmangaSource } from '../api/sources/westmanga';
+
+const PopularBanner = ({ type, bannerCategory = 'popular' }) => {
   const [items, setItems] = useState([]);
   const [current, setCurrent] = useState(0);
   const [trailerActive, setTrailerActive] = useState(false);
 
-  // Fetch popular list
+  // Fetch data based on type and bannerCategory
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data =
-          type === 'anime'
-            ? await myAnimeList.getTrendingAnime(6)
-            : await myAnimeList.getTrendingManga(6);
+        let data;
+        if (type === 'anime') {
+          data = await myAnimeList.getTrendingAnime(6);
+        } else {
+          // Manga source handling
+          if (bannerCategory === 'popular') {
+            const res = await westmangaSource.getPopularManga(6);
+            data = res.data || res;
+          } else if (bannerCategory === 'latest') {
+            const res = await westmangaSource.getTrendingManga(6);
+            data = res.data || res;
+          } else {
+            // fallback to popular
+            const res = await westmangaSource.getPopularManga(6);
+            data = res.data || res;
+          }
+        }
         setItems(data);
       } catch (e) {
-        console.error('Failed to fetch popular', e);
+        console.error('Failed to fetch banner data', e);
       }
     };
     fetchData();
-  }, [type]);
+  }, [type, bannerCategory]);
 
   // Handle slide transitions and auto trailer play
   useEffect(() => {
@@ -125,7 +140,7 @@ const PopularBanner = ({ type }) => {
       <div className="banner-body">
         <div className="banner-content">
           <span className="banner-badge">
-            {type === 'anime' ? '🔥 POPULER ANIME' : '📚 POPULER MANGA'}
+            {type === 'anime' ? '🔥 POPULER ANIME' : (bannerCategory === 'popular' ? '📚 POPULER MANGA' : '🆕 UPDATE TERBARU')}
           </span>
           <h1 className="banner-title">{item.title}</h1>
           <div className="banner-meta">

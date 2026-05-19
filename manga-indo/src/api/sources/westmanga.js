@@ -5,13 +5,28 @@ const BACKEND_URL = import.meta.env.PROD ? '/api/westmanga' : 'http://localhost:
 export const westmangaSource = {
   getTrendingManga: async (limit = 20, offset = 0) => {
     try {
+      const page = Math.floor((parseInt(offset) || 0) / limit) + 1;
       const response = await axios.get(`${BACKEND_URL}/latest`, {
-        params: { limit, offset }
+        params: { page, limit }
       });
       return response.data;
     } catch (error) {
       console.error('WestManga Error:', error);
       throw new Error('Gagal memuat dari WestManga (Server Lokal mungkin mati).');
+    }
+  },
+
+  // Popular manga (based on popular endpoint)
+  getPopularManga: async (limit = 20, offset = 0) => {
+    try {
+      const page = Math.floor((parseInt(offset) || 0) / limit) + 1;
+      const response = await axios.get(`${BACKEND_URL}/popular`, {
+        params: { page, limit }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('WestManga Popular Error:', error);
+      throw new Error('Gagal memuat popular manga dari WestManga.');
     }
   },
 

@@ -1,0 +1,117 @@
+﻿Navigating to https://westmanga.co/...
+[REQ] DOCUMENT: https://westmanga.co/
+[REQ] SCRIPT: https://westmanga.co/assets/entry.client-CpUsT8Ys.js
+[REQ] SCRIPT: https://westmanga.co/assets/rolldown-runtime-CZaVQj_c.js
+[REQ] SCRIPT: https://westmanga.co/assets/@floating-ui-XFZbnyen.js
+[REQ] SCRIPT: https://westmanga.co/assets/@radix-ui-BoLdUS27.js
+[REQ] SCRIPT: https://westmanga.co/assets/root-C-h1x-f8.js
+[REQ] SCRIPT: https://westmanga.co/assets/components-_yy6KL6v.js
+[REQ] SCRIPT: https://westmanga.co/assets/auth-dmgiI-sl.js
+[REQ] SCRIPT: https://westmanga.co/assets/bookmark-CKBjt-BD.js
+[REQ] SCRIPT: https://westmanga.co/assets/chatbox-Craul8uF.js
+[REQ] SCRIPT: https://westmanga.co/assets/comment-Dk1383m_.js
+[REQ] SCRIPT: https://westmanga.co/assets/@hookform-Biz4sbmT.js
+[REQ] SCRIPT: https://westmanga.co/assets/@inversifyjs-D5p3p8p1.js
+[REQ] SCRIPT: https://westmanga.co/assets/autosize-CC_UGgyY.js
+[REQ] SCRIPT: https://westmanga.co/assets/class-variance-authority-BZHCpEH9.js
+[REQ] SCRIPT: https://westmanga.co/assets/cmdk-BMJf4r00.js
+[REQ] SCRIPT: https://westmanga.co/assets/index-Cxz3nCKM.js
+[REQ] SCRIPT: https://westmanga.co/assets/pages-NevjAcK-.js
+[REQ] SCRIPT: https://westmanga.co/assets/lucide-react-C6vYypW1.js
+Page loaded. Waiting 15s for dynamic requests...
+[REQ INTERCEPTED] https://data.mantweh.online/api/framework/config
+Original Headers: {
+  "sec-ch-ua-platform": "\"Windows\"",
+  "referer": "https://westmanga.co/",
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/148.0.0.0 Safari/537.36",
+  "sec-ch-ua": "\"Chromium\";v=\"148\", \"Google Chrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+  "sec-ch-ua-mobile": "?0",
+  "accept": "*/*",
+  "origin": "https://westmanga.co"
+}
+[SUCCESS FULFILLED] https://data.mantweh.online/api/framework/config -> status 200
+[REQ INTERCEPTED] https://data.mantweh.online/api/chatbox?page=1
+Original Headers: {
+  "accept": "*/*",
+  "access-control-request-headers": "x-wm-accses-key,x-wm-request-signature,x-wm-request-time",
+  "access-control-request-method": "GET",
+  "origin": "https://westmanga.co",
+  "sec-fetch-mode": "cors",
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/148.0.0.0 Safari/537.36",
+  "referer": "https://westmanga.co/"
+}
+[REQ INTERCEPTED] https://data.mantweh.online/api/contents/new-projects
+Original Headers: {
+  "accept": "*/*",
+  "access-control-request-headers": "x-wm-accses-key,x-wm-request-signature,x-wm-request-time",
+  "access-control-request-method": "GET",
+  "origin": "https://westmanga.co",
+  "sec-fetch-mode": "cors",
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/148.0.0.0 Safari/537.36",
+  "referer": "https://westmanga.co/"
+}
+[REQ] SCRIPT: https://s10.histats.com/js15_as.js
+[REQ INTERCEPTED] https://data.mantweh.online/api/contents/home-data
+Original Headers: {
+  "accept": "*/*",
+  "access-control-request-headers": "x-wm-accses-key,x-wm-request-signature,x-wm-request-time",
+  "access-control-request-method": "GET",
+  "origin": "https://westmanga.co",
+  "sec-fetch-mode": "cors",
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/148.0.0.0 Safari/537.36",
+  "referer": "https://westmanga.co/"
+}
+[SUCCESS FULFILLED] https://data.mantweh.online/api/contents/home-data -> status 204
+[SUCCESS FULFILLED] https://data.mantweh.online/api/contents/new-projects -> status 204
+[SUCCESS FULFILLED] https://data.mantweh.online/api/chatbox?page=1 -> status 204
+[REQ INTERCEPTED] https://data.mantweh.online/api/contents/home-data
+Original Headers: {
+  "x-wm-accses-key": "WM_WEB_FRONT_END",
+  "sec-ch-ua-platform": "\"Windows\"",
+  "referer": "https://westmanga.co/",
+  "sec-ch-ua": "\"Chromium\";v=\"148\", \"Google Chrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+  "sec-ch-ua-mobile": "?0",
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/148.0.0.0 Safari/537.36",
+  "x-wm-request-signature": "fd2a9ffd6a5117571bc9abd5ad556f6660db22a185ccc0a65476addead4eab5a",
+  "x-wm-request-time": "1779197548",
+  "accept": "*/*",
+  "origin": "https://westmanga.co"
+}
+[REQ INTERCEPTED] https://data.mantweh.online/api/contents/new-projects
+Original Headers: {
+  "x-wm-accses-key": "WM_WEB_FRONT_END",
+  "sec-ch-ua-platform": "\"Windows\"",
+  "referer": "https://westmanga.co/",
+  "sec-ch-ua": "\"Chromium\";v=\"148\", \"Google Chrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+  "sec-ch-ua-mobile": "?0",
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/148.0.0.0 Safari/537.36",
+  "x-wm-request-signature": "63b8938d17c1faac55d1f0770416c953a6c50352d660a6dbd96b451281e90a57",
+  "x-wm-request-time": "1779197548",
+  "accept": "*/*",
+  "origin": "https://westmanga.co"
+}
+[REQ INTERCEPTED] https://data.mantweh.online/api/chatbox?page=1
+Original Headers: {
+  "x-wm-accses-key": "WM_WEB_FRONT_END",
+  "sec-ch-ua-platform": "\"Windows\"",
+  "referer": "https://westmanga.co/",
+  "sec-ch-ua": "\"Chromium\";v=\"148\", \"Google Chrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+  "sec-ch-ua-mobile": "?0",
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/148.0.0.0 Safari/537.36",
+  "x-wm-request-signature": "63864a5a4b0b9e09a65ae4d0637e786a47abcbaf2692913619c128c44483ffd5",
+  "x-wm-request-time": "1779197548",
+  "accept": "*/*",
+  "origin": "https://westmanga.co"
+}
+[REQ] SCRIPT: https://s4.histats.com/stats/4328947.php?4328947&@f16&@g1&@h1&@i1&@j1779197548578&@k0&@l1&@mHome%20-%20Westmanga&@n0&@o1000&@q0&@r0&@s1034&@ten-US&@u800&@b1:-70263260&@b3:1779197549&@b4:js15_as.js&@b5:420&@a-_0.2.1&@vhttps%3A%2F%2Fwestmanga.co%2F&@w
+[REQ] FETCH: https://westmanga.co/__manifest?paths=%2F%2C%2Fauth%2Flogin%2C%2Fbookmark%2C%2Fcontents%2C%2Fhistory%2C%2Fpost%2Fads%2C%2Fpost%2Fdonasi&version=7aa82dd6
+[SUCCESS FULFILLED] https://data.mantweh.online/api/contents/new-projects -> status 200
+[SUCCESS FULFILLED] https://data.mantweh.online/api/contents/home-data -> status 200
+[REQ] FETCH: https://westmanga.co/__manifest?paths=%2F%2C%2Fauth%2Flogin%2C%2Fbookmark%2C%2Fcomic%2Fakujo-ranking%2C%2Fcomic%2Fhangyakusha-to-shite-oukoku-de-shokei-sareta-kakure-saikyou-kishi%2C%2Fcomic%2Fsaiyakkyuu-skill-boushoku-maou-mochi-no-akuyaku-kizoku-ni-tensei-shimashita-ga-shokei-saretakunai-node-skill-wo-kakushite-hitasura-doryoku-shimasu%2C%2Fcomic%2Fsuki-na-ko-ni-kokuttara-futago-no-imouto-ga-omake-de-tsuitekita%2C%2Fcomic%2Fyasagure-shoukansha-wa-ugokanai%2C%2Fcontents%2C%2Fhistory%2C%2Fpost%2Fads%2C%2Fpost%2Fdonasi&version=7aa82dd6
+[SUCCESS FULFILLED] https://data.mantweh.online/api/chatbox?page=1 -> status 200
+[REQ] FETCH: https://westmanga.co/__manifest?paths=%2Fcomic%2F10000-ways-to-eliminate-players%2C%2Fcomic%2Fa-small-world-full-of-fun%2C%2Fcomic%2Fafter-transmigrating-into-the-cyberpunk-game-i-defeated-the-boss-and-successfully-rose-to-the-top%2C%2Fcomic%2Fakuyaku-kizoku-ga-hirakinaotte-hametsu-flag-wo-jitsuryoku-de-tatakiotteitara-itsunomanika-heroine-tachi-kara-eiyuushi-sareru-you-ni-natta-ken%2C%2Fcomic%2Fbao-jin-wo-de-xiao-majia%2C%2Fcomic%2Fchanto-suki-tte-ieru-ko-musou%2C%2Fcomic%2Fcosmic-censorship%2C%2Fcomic%2Ffair-trade-committee%2C%2Fcomic%2Fgame-chishiki-de-saikyou-ni-natta-mob-heishi-wa-shin-no-jitsuryoku-wo-kakushitai%2C%2Fcomic%2Fgame-obu-familia-family-senki%2C%2Fcomic%2Fgirl-go%2C%2Fcomic%2Fhenkyou-no-roukishi-bard-loen%2C%2Fcomic%2Fhonto-wa-watashi-ga-iin-desho%2C%2Fcomic%2Fi-became-the-master-of-the-weakest-demon-king%2C%2Fcomic%2Fi-was-possessed-but-it-became-a-ghost-story%2C%2Fcomic%2Fichioku-nen-button-o-renda-shita-ore-wa-kizuitara-saikyou-ni-natteita%2C%2Fcomic%2Fisekai-ryouridou%2C%2Fcomic%2Fkami-ni-aisareta-ko%2C%2Fcomic%2Fkuni-wo-owareta-ryuushi-san-hirowareta-ringoku-de-ukkari-musou-shite-shimau%2C%2Fcomic%2Fmaou-toubatsu-shita-ato-medachitakunai-node-guild-master-ni-natta%2C%2Fcomic%2Fmy-gift-lvl-9999-unlimited-gacha%2C%2Fcomic%2Fmysterious-revival-starting-with-a-trillion-ghost-coins%2C%2Fcomic%2Fnageki-no-bourei-wa-intai-shitai-saijiyaku-hanta-ni-yoru-saikiyou-patei-ikusei-jutsu%2C%2Fcomic%2Fpast-life-regressor-remake-2022%2C%2Fcomic%2Frainbow-bridge-watchman%2C%2Fcomic%2Fsupreme-academy-genius%2C%2Fcomic%2Ftensei-kizoku-no-isekai-boukenroku-jichou-wo-shiranai-kamigami-no-shit%2C%2Fcomic%2Fthe-delusional-hunter-in-another-world%2C%2Fcomic%2Fthe-high-energy-attack%2C%2Fcomic%2Fthe-new-hire-is-the-demon-lord%2C%2Fcomic%2Fthe-regressed-former-sword-saint-becomes-a-rebel-of-the-necromancer-house%2C%2Fview%2F10000-ways-to-eliminate-players-chapter-07-bahasa-indonesia%2C%2Fview%2Fa-small-world-full-of-fun-chapter-15-bahasa-indonesia%2C%2Fview%2Fafter-transmigrating-into-the-cyberpunk-game-i-defeated-the-boss-and-successfully-rose-to-the-top-chapter-09-bahasa-indonesia%2C%2Fview%2Fakuyaku-kizoku-ga-hirakinaotte-hametsu-flag-wo-jitsuryoku-de-tatakiotteitara-itsunomanika-heroine-tachi-kara-eiyuushi-sareru-you-ni-natta-ken-chapter-06-bahasa-indonesia%2C%2Fview%2Fbao-jin-wo-de-xiao-majia-chapter-413-bahasa-indonesia%2C%2Fview%2Fchanto-suki-tte-ieru-ko-musou-chapter-08-bahasa-indonesia%2C%2Fview%2Fcosmic-censorship-chapter-26-bahasa-indonesia%2C%2Fview%2Ffair-trade-committee-chapter-62-bahasa-indonesia%2C%2Fview%2Fgame-chishiki-de-saikyou-ni-natta-mob-heishi-wa-shin-no-jitsuryoku-wo-kakushitai-chapter-14-3-bahasa-indonesia%2C%2Fview%2Fgame-obu-familia-family-senki-chapter-80-bahasa-indonesia%2C%2Fview%2Fgirl-go-chapter-32-bahasa-indonesia%2C%2Fview%2Fhenkyou-no-roukishi-bard-loen-chapter-02-bahasa-indonesia%2C%2Fview%2Fhontou-wa-watashi-ga-iin-desho-chapter-04-bahasa-indonesia%2C%2Fview%2Fi-became-the-master-of-the-weakest-demon-king-chapter-10-bahasa-indonesia%2C%2Fview%2Fi-was-possessed-but-it-became-a-ghost-story-chapter-33-bahasa-indonesia%2C%2Fview%2Fichioku-nen-button-o-renda-shita-ore-wa-kizuitara-saikyou-ni-natteita-chapter-33-bahasa-indonesia%2C%2Fview%2Fisekai-ryouridou-chapter-72-bahasa-indonesia%2C%2Fview%2Fkami-ni-aisareta-ko-chapter-57-end-bahasa-indonesia%2C%2Fview%2Fkuni-wo-owareta-ryuushi-san-hirowareta-ringoku-de-ukkari-musou-shite-shimau-chapter-29-bahasa-indonesia%2C%2Fview%2Fmaou-toubatsu-shita-ato-medachitakunai-node-guild-master-ni-natta-chapter-74-end-bahasa-indonesia%2C%2Fview%2Fmy-gift-lvl-9999-unlimited-gacha-chapter-201-bahasa-indonesia%2C%2Fview%2Fmysterious-revival-starting-with-a-trillion-ghost-coins-chapter-16-bahasa-indonesia%2C%2Fview%2Fnageki-no-bourei-wa-intai-shitai-saijiyaku-hanta-ni-yoru-saikiyou-patei-ikusei-jutsu-chapter-63-bahasa-indonesia%2C%2Fview%2Fpast-life-regressor-remake-2022-chapter-173-bahasa-indonesia%2C%2Fview%2Frainbow-bridge-watchman-chapter-191-bahasa-indonesia%2C%2Fview%2Fsupreme-academy-genius-chapter-47-bahasa-indonesia%2C%2Fview%2Ftensei-kizoku-no-isekai-boukenroku-jichou-wo-shiranai-kamigami-no-shit-chapter-77-bahasa-indonesia%2C%2Fview%2Fthe-delusional-hunter-in-another-world-chapter-90-bahasa-indonesia%2C%2Fview%2Fthe-high-energy-attack-chapter-58-bahasa-indonesia%2C%2Fview%2Fthe-new-hire-is-the-demon-lord-chapter-45-bahasa-indonesia%2C%2Fview%2Fthe-regressed-former-sword-saint-becomes-a-rebel-of-the-necromancer-house-chapter-05-bahasa-indonesia&version=7aa82dd6
+[REQ] FETCH: https://westmanga.co/__manifest?paths=%2Fcomic%2F10000-ways-to-eliminate-players%2C%2Fcomic%2Fa-small-world-full-of-fun%2C%2Fcomic%2Fafter-transmigrating-into-the-cyberpunk-game-i-defeated-the-boss-and-successfully-rose-to-the-top%2C%2Fcomic%2Fakuyaku-kizoku-ga-hirakinaotte-hametsu-flag-wo-jitsuryoku-de-tatakiotteitara-itsunomanika-heroine-tachi-kara-eiyuushi-sareru-you-ni-natta-ken%2C%2Fcomic%2Fbao-jin-wo-de-xiao-majia%2C%2Fcomic%2Fchanto-suki-tte-ieru-ko-musou%2C%2Fcomic%2Fcosmic-censorship%2C%2Fcomic%2Ffair-trade-committee%2C%2Fcomic%2Fgame-chishiki-de-saikyou-ni-natta-mob-heishi-wa-shin-no-jitsuryoku-wo-kakushitai%2C%2Fcomic%2Fgame-obu-familia-family-senki%2C%2Fcomic%2Fgirl-go%2C%2Fcomic%2Fhenkyou-no-roukishi-bard-loen%2C%2Fcomic%2Fhonto-wa-watashi-ga-iin-desho%2C%2Fcomic%2Fi-became-the-master-of-the-weakest-demon-king%2C%2Fcomic%2Fi-was-possessed-but-it-became-a-ghost-story%2C%2Fcomic%2Fichioku-nen-button-o-renda-shita-ore-wa-kizuitara-saikyou-ni-natteita%2C%2Fcomic%2Fisekai-ryouridou%2C%2Fcomic%2Fkami-ni-aisareta-ko%2C%2Fcomic%2Fkuni-wo-owareta-ryuushi-san-hirowareta-ringoku-de-ukkari-musou-shite-shimau%2C%2Fcomic%2Fmaou-toubatsu-shita-ato-medachitakunai-node-guild-master-ni-natta%2C%2Fcomic%2Fmy-gift-lvl-9999-unlimited-gacha%2C%2Fcomic%2Fmysterious-revival-starting-with-a-trillion-ghost-coins%2C%2Fcomic%2Fnageki-no-bourei-wa-intai-shitai-saijiyaku-hanta-ni-yoru-saikiyou-patei-ikusei-jutsu%2C%2Fcomic%2Fpast-life-regressor-remake-2022%2C%2Fcomic%2Frainbow-bridge-watchman%2C%2Fcomic%2Fsupreme-academy-genius%2C%2Fcomic%2Ftensei-kizoku-no-isekai-boukenroku-jichou-wo-shiranai-kamigami-no-shit%2C%2Fcomic%2Fthe-delusional-hunter-in-another-world%2C%2Fcomic%2Fthe-high-energy-attack%2C%2Fcomic%2Fthe-new-hire-is-the-demon-lord%2C%2Fcomic%2Fthe-regressed-former-sword-saint-becomes-a-rebel-of-the-necromancer-house%2C%2Fview%2F10000-ways-to-eliminate-players-chapter-07-bahasa-indonesia%2C%2Fview%2Fa-small-world-full-of-fun-chapter-15-bahasa-indonesia%2C%2Fview%2Fafter-transmigrating-into-the-cyberpunk-game-i-defeated-the-boss-and-successfully-rose-to-the-top-chapter-09-bahasa-indonesia%2C%2Fview%2Fakuyaku-kizoku-ga-hirakinaotte-hametsu-flag-wo-jitsuryoku-de-tatakiotteitara-itsunomanika-heroine-tachi-kara-eiyuushi-sareru-you-ni-natta-ken-chapter-06-bahasa-indonesia%2C%2Fview%2Fbao-jin-wo-de-xiao-majia-chapter-413-bahasa-indonesia%2C%2Fview%2Fchanto-suki-tte-ieru-ko-musou-chapter-08-bahasa-indonesia%2C%2Fview%2Fcosmic-censorship-chapter-26-bahasa-indonesia%2C%2Fview%2Ffair-trade-committee-chapter-62-bahasa-indonesia%2C%2Fview%2Fgame-chishiki-de-saikyou-ni-natta-mob-heishi-wa-shin-no-jitsuryoku-wo-kakushitai-chapter-14-3-bahasa-indonesia%2C%2Fview%2Fgame-obu-familia-family-senki-chapter-80-bahasa-indonesia%2C%2Fview%2Fgirl-go-chapter-32-bahasa-indonesia%2C%2Fview%2Fhenkyou-no-roukishi-bard-loen-chapter-02-bahasa-indonesia%2C%2Fview%2Fhontou-wa-watashi-ga-iin-desho-chapter-04-bahasa-indonesia%2C%2Fview%2Fi-became-the-master-of-the-weakest-demon-king-chapter-10-bahasa-indonesia%2C%2Fview%2Fi-was-possessed-but-it-became-a-ghost-story-chapter-33-bahasa-indonesia%2C%2Fview%2Fichioku-nen-button-o-renda-shita-ore-wa-kizuitara-saikyou-ni-natteita-chapter-33-bahasa-indonesia%2C%2Fview%2Fisekai-ryouridou-chapter-72-bahasa-indonesia%2C%2Fview%2Fkami-ni-aisareta-ko-chapter-57-end-bahasa-indonesia%2C%2Fview%2Fkuni-wo-owareta-ryuushi-san-hirowareta-ringoku-de-ukkari-musou-shite-shimau-chapter-29-bahasa-indonesia%2C%2Fview%2Fmaou-toubatsu-shita-ato-medachitakunai-node-guild-master-ni-natta-chapter-74-end-bahasa-indonesia%2C%2Fview%2Fmy-gift-lvl-9999-unlimited-gacha-chapter-201-bahasa-indonesia%2C%2Fview%2Fmysterious-revival-starting-with-a-trillion-ghost-coins-chapter-16-bahasa-indonesia%2C%2Fview%2Fnageki-no-bourei-wa-intai-shitai-saijiyaku-hanta-ni-yoru-saikiyou-patei-ikusei-jutsu-chapter-63-bahasa-indonesia%2C%2Fview%2Fpast-life-regressor-remake-2022-chapter-173-bahasa-indonesia%2C%2Fview%2Frainbow-bridge-watchman-chapter-191-bahasa-indonesia%2C%2Fview%2Fsupreme-academy-genius-chapter-47-bahasa-indonesia%2C%2Fview%2Ftensei-kizoku-no-isekai-boukenroku-jichou-wo-shiranai-kamigami-no-shit-chapter-77-bahasa-indonesia%2C%2Fview%2Fthe-delusional-hunter-in-another-world-chapter-90-bahasa-indonesia%2C%2Fview%2Fthe-high-energy-attack-chapter-58-bahasa-indonesia%2C%2Fview%2Fthe-new-hire-is-the-demon-lord-chapter-45-bahasa-indonesia%2C%2Fview%2Fthe-regressed-former-sword-saint-becomes-a-rebel-of-the-necromancer-house-chapter-05-bahasa-indonesia&version=7aa82dd6
+[REQ] SCRIPT: https://s10.histats.com/counters/cc_1034.js
+PAGE LOG [error]: WebSocket connection to 'wss://stream.mantweh.online/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+PAGE LOG [error]: WebSocket connection to 'wss://stream.mantweh.online/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+
