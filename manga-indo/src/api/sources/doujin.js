@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BACKEND_URL = 'http://localhost:3001/api/doujin';
+const BACKEND_URL = import.meta.env.PROD ? '/api/doujin' : 'http://localhost:3001/api/doujin';
 
 export const doujinSource = {
   getTrendingManga: async (limit = 20, offset = 0) => {

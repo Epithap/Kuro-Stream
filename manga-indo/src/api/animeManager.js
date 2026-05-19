@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { anilistSource } from '../api/sources/anilist';
 
-const BACKEND_URL = 'http://localhost:3001/api/anime';
+const BACKEND_URL = import.meta.env.PROD ? '/api/anime' : 'http://localhost:3001/api/anime';
 // Fallback: Jikan API (MyAnimeList, tidak terblokir)
 const JIKAN_URL = 'https://api.jikan.moe/v4';
 
@@ -145,7 +145,8 @@ export const animeSourceManager = {
 
   searchYoutubeVideo: async (query) => {
     try {
-      const res = await axios.get(`http://localhost:3001/api/youtube/search`, { params: { q: query }, timeout: 10000 });
+      const youtubeUrl = import.meta.env.PROD ? '/api/youtube/search' : 'http://localhost:3001/api/youtube/search';
+      const res = await axios.get(youtubeUrl, { params: { q: query }, timeout: 10000 });
       return res.data; // returns { videoId, embedUrl }
     } catch (e) {
       console.error('Failed to search youtube fallback video:', e.message);

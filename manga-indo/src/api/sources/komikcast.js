@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BACKEND_URL = 'http://localhost:3001/api/komikcast';
+const BACKEND_URL = import.meta.env.PROD ? '/api/komikcast' : 'http://localhost:3001/api/komikcast';
 
 export const komikcastSource = {
   getTrendingManga: async (limit = 20, offset = 0) => {

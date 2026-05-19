@@ -202,6 +202,11 @@ app.get('/api/youtube/search', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 KuroStream Backend running on http://localhost:${PORT}`);
-});
+// Export app for Vercel Serverless
+export default app;
+
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 KuroStream Backend running on http://localhost:${PORT}`);
+  });
+}
