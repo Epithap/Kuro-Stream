@@ -1,0 +1,190 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { sourceManager } from '../api/sourceManager';
+import { BookOpen, List, Globe2, ArrowUpDown, ExternalLink, ChevronDown } from 'lucide-react';
+import './MangaDetail.css';
+
+const MangaDetail = () => {
+  const { id } = useParams();
+  const [manga, setManga] = useState(null);
+  const [chapters, setChapters] = useState([]);
+  const [totalChapters, setTotalChapters] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const LIMIT = 100;
+  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  const [sortOrder, setSortOrder] = useState('desc'); // 'desc' (terbaru) atau 'asc' (lama)
+  const [loadingChapters, setLoadingChapters] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const mangaData = await sourceManager.getMangaDetail(id);
+        const chapterData = await sourceManager.getMangaChapters(id, sortOrder, LIMIT, 0);
+        
+        setManga(mangaData);
+        setChapters(chapterData.data);
+        setTotalChapters(chapterData.total);
+        setOffset(0);
+      } catch (err) {
+        setError('Gagal memuat detail manga.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  const handleSortChange = async () => {
+    const newOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+    setSortOrder(newOrder);
+    setLoadingChapters(true);
+    setOffset(0); // Reset offset on sort
+    try {
+      const chapterData = await sourceManager.getMangaChapters(id, newOrder, LIMIT, 0);
+      setChapters(chapterData.data);
+      setTotalChapters(chapterData.total);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingChapters(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (loadingMore) return;
+    const newOffset = offset + LIMIT;
+    setLoadingMore(true);
+    try {
+      const chapterData = await sourceManager.getMangaChapters(id, sortOrder, LIMIT, newOffset);
+      setChapters(prev => [...prev, ...chapterData.data]);
+      setOffset(newOffset);
+    } catch (err) {
+      console.error('Gagal meload chapter tambahan', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="detail-container animate-fade-in">
+        <div className="skeleton" style={{ height: '300px', borderRadius: '12px' }}></div>
+      </div>
+    );
+  }
+
+  if (error || !manga) {
+    return <div className="error-message">{error || 'Manga tidak ditemukan.'}</div>;
+  }
+
+  const activeSourceId = sourceManager.getActiveSourceId();
+  const langLabel = activeSourceId === 'mangadex_en' ? 'EN' : 'Sub Indo';
+
+  return (
+    <div className="detail-container animate-fade-in">
+      <div className="detail-header glass-panel">
+        <div className="detail-cover-wrapper">
+          <img src={manga.highResCoverUrl} alt={manga.title} className="detail-cover" />
+        </div>
+        <div className="detail-info">
+          <h1 className="detail-title">{manga.title}</h1>
+          <div className="detail-meta">
+            <span className="status-badge">{manga.status}</span>
+            <span className="language-badge"><Globe2 size={14} /> {langLabel}</span>
+          </div>
+          
+          <div className="detail-tags">
+            {manga.tags.slice(0, 5).map(tag => (
+              <span key={tag} className="tag">{tag}</span>
+            ))}
+          </div>
+
+          <div className="detail-synopsis">
+            <h3>Sinopsis</h3>
+            <p>{manga.synopsis}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="chapters-section">
+        <div className="section-header-flex">
+          <h2 className="section-title">
+            <List className="text-gradient" />
+            Daftar Chapter <span className="chapter-count">({totalChapters})</span>
+          </h2>
+          <button className="btn-sort" onClick={handleSortChange} disabled={loadingChapters}>
+            <ArrowUpDown size={16} />
+            Urutkan: {sortOrder === 'desc' ? 'Terbaru (Atas)' : 'Terlama (Atas)'}
+          </button>
+        </div>
+        
+        {loadingChapters ? (
+          <div className="chapters-list simple-list">
+             <div className="skeleton" style={{ height: '40px', borderRadius: '8px' }}></div>
+             <div className="skeleton" style={{ height: '40px', borderRadius: '8px' }}></div>
+          </div>
+        ) : chapters.length > 0 ? (
+          <>
+            <div className="chapters-list simple-list">
+              {chapters.map((chapter) => {
+                const isExternal = chapter.pages === 0 && chapter.externalUrl;
+                const chapterText = `Chapter ${chapter.chapter || '?'}`;
+                const titleText = chapter.title ? ` - ${chapter.title}` : '';
+                
+                if (isExternal) {
+                  return (
+                    <a key={chapter.id} href={chapter.externalUrl} target="_blank" rel="noopener noreferrer" className="chapter-item simple-item">
+                      <div className="chapter-info-simple">
+                        <span className="ch-num">{chapterText}</span>
+                        <span className="ch-title">{titleText}</span>
+                      </div>
+                      <ExternalLink size={16} className="text-muted" />
+                    </a>
+                  );
+                }
+
+                return (
+                  <Link key={chapter.id} to={`/chapter/${chapter.id}`} className="chapter-item simple-item">
+                    <div className="chapter-info-simple">
+                      <span className="ch-num">{chapterText}</span>
+                      <span className="ch-title">{titleText}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            
+            {chapters.length < totalChapters && (
+              <div className="load-more-container">
+                <button 
+                  className="btn-load-more" 
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? 'Memuat...' : (
+                    <>
+                      <ChevronDown size={18} /> Muat Lebih Banyak ({chapters.length} / {totalChapters})
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="empty-state">
+            Belum ada chapter untuk manga ini di sumber terpilih.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default MangaDetail;
