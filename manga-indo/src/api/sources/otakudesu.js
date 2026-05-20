@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { BaseSource } from '../sourceManager';
 
-const API_BASE = 'http://localhost:3001/api/anime';
+const API_BASE = import.meta.env.PROD ? '/api/anime' : 'http://localhost:3001/api/anime';
 
 class OtakudesuSource extends BaseSource {
   constructor() {

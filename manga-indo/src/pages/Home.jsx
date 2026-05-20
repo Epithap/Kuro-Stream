@@ -73,12 +73,10 @@ const Home = () => {
         let data;
         if (searchQuery) {
           data = await sourceManager.searchManga(searchQuery, 20, offset);
+        } else if (filterMode === 'popular') {
+          data = await sourceManager.getPopularManga(20, offset);
         } else {
-          if (filterMode === 'popular') {
-            data = await sourceManager.getPopularManga(20, offset);
-          } else {
-            data = await sourceManager.getTrendingManga(20, offset);
-          }
+          data = await sourceManager.getTrendingManga(20, offset);
         }
         
         const newMangas = data.data || [];
@@ -90,7 +88,6 @@ const Home = () => {
           setMangas(newMangas);
         } else {
           setMangas(prev => {
-            // Filter out duplicates just in case
             const existingIds = new Set(prev.map(m => m.id));
             const filtered = newMangas.filter(m => !existingIds.has(m.id));
             return [...prev, ...filtered];

@@ -3,33 +3,54 @@ import * as cheerio from 'cheerio';
 import dns from 'dns';
 import https from 'https';
 
-// Configure custom DNS resolver to bypass ISP blocks (Internet Positif)
-const { Resolver } = dns.promises;
-const resolver = new Resolver();
-resolver.setServers(['8.8.8.8', '1.1.1.1']);
+const dnsCache = {};
 
-const customLookup = (hostname, options, callback) => {
+async function resolveDoh(hostname) {
+  if (dnsCache[hostname]) return dnsCache[hostname];
+  try {
+    const response = await axios.get(`https://cloudflare-dns.com/dns-query?name=${hostname}&type=A`, {
+      headers: { 'Accept': 'application/dns-json' },
+      timeout: 5000
+    });
+    const answers = response.data?.Answer;
+    if (answers && answers.length > 0) {
+      const aRecords = answers.filter(ans => ans.type === 1).map(ans => ans.data);
+      if (aRecords.length > 0) {
+        dnsCache[hostname] = aRecords;
+        return aRecords;
+      }
+    }
+  } catch (err) {
+    console.error(`[DNS DoH] Resolution failed for ${hostname}:`, err.message);
+  }
+  return null;
+}
+
+const customLookup = async (hostname, options, callback) => {
   const cb = typeof options === 'function' ? options : callback;
   const opt = typeof options === 'object' ? options : {};
-  
-  resolver.resolve4(hostname)
-    .then(addresses => {
-      if (addresses && addresses.length > 0) {
-        if (opt.all) {
-          cb(null, addresses.map(addr => ({ address: addr, family: 4 })));
-        } else {
-          cb(null, addresses[0], 4);
-        }
+
+  if (hostname === 'cloudflare-dns.com' || hostname === 'dns.google') {
+    return dns.lookup(hostname, opt, cb);
+  }
+
+  try {
+    const addresses = await resolveDoh(hostname);
+    if (addresses && addresses.length > 0) {
+      if (opt.all) {
+        cb(null, addresses.map(addr => ({ address: addr, family: 4 })));
       } else {
-        dns.lookup(hostname, opt, cb);
+        cb(null, addresses[0], 4);
       }
-    })
-    .catch(err => {
+    } else {
       dns.lookup(hostname, opt, cb);
-    });
+    }
+  } catch (err) {
+    dns.lookup(hostname, opt, cb);
+  }
 };
 
-const httpsAgent = process.env.VERCEL ? undefined : new https.Agent({ lookup: customLookup });
+const httpsAgent = process.env.VERCEL ? undefined : new https.Agent({ lookup: customLookup, rejectUnauthorized: false });
 
 // Create an axios instance with the custom agent
 const api = axios.create({ httpsAgent, timeout: 20000 });

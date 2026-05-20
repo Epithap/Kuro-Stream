@@ -62,7 +62,8 @@ const PopularBanner = ({ type, bannerCategory = 'popular' }) => {
       
       if (item) {
         if (item.trailerUrl) {
-          setTrailerActive(true);
+          // Do not auto-activate trailer
+          setTrailerActive(false);
         } else if (item.trailerUrl !== null) {
           // fetch it dynamically
           animeSourceManager.searchYoutubeVideo(`${item.title} official anime trailer`).then(res => {
@@ -72,6 +73,8 @@ const PopularBanner = ({ type, bannerCategory = 'popular' }) => {
                 newItems[current] = { ...newItems[current], trailerUrl: res.embedUrl };
                 return newItems;
               });
+              // Trailer fetched, but wait for user to click play
+              setTrailerActive(false);
             } else {
               setItems(prev => {
                 const newItems = [...prev];
@@ -165,14 +168,15 @@ const PopularBanner = ({ type, bannerCategory = 'popular' }) => {
           />
         )}
         
-        {/* Navigation Arrow Buttons inside media area for easy access */}
-        <button className="banner-arrow arrow-left" onClick={handlePrev} aria-label="Previous Slide">
-          <ChevronLeft size={22} />
-        </button>
-        <button className="banner-arrow arrow-right" onClick={handleNext} aria-label="Next Slide">
-          <ChevronRight size={22} />
-        </button>
       </div>
+      
+      {/* Navigation Arrow Buttons */}
+      <button className="banner-arrow arrow-left" onClick={handlePrev} aria-label="Previous Slide">
+        <ChevronLeft size={22} />
+      </button>
+      <button className="banner-arrow arrow-right" onClick={handleNext} aria-label="Next Slide">
+        <ChevronRight size={22} />
+      </button>
 
       {/* Details and Actions Area */}
       <div className="banner-body">

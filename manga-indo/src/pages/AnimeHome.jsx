@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { animeSourceManager } from '../api/animeManager';
-import { Play, Tv, Info } from 'lucide-react';
+import { Play, Tv } from 'lucide-react';
+import SpeedUpButton from '../components/SpeedUpButton';
 import './AnimeHome.css';
 import TrendingCarousel from '../components/TrendingCarousel';
 import PopularBanner from '../components/PopularBanner';
@@ -46,13 +47,12 @@ const AnimeHome = () => {
   const [animes, setAnimes] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [source, setSource] = useState('');
   const [offset, setOffset] = useState(0);
+  const [filterMode, setFilterMode] = useState('latest');
   const [hasMore, setHasMore] = useState(true);
-
-  const [filterMode, setFilterMode] = useState('latest'); // 'latest', 'popular', 'weekly', 'movie'
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Reset list and pagination when search query or filter changes
   useEffect(() => {
@@ -80,6 +80,8 @@ const AnimeHome = () => {
             result = await animeSourceManager.getWeeklyAnime(offset);
           } else if (filterMode === 'movie') {
             result = await animeSourceManager.getMovieAnime(offset);
+          } else if (filterMode === 'all') {
+            result = await animeSourceManager.getAllAnime(offset);
           } else {
             result = await animeSourceManager.getLatestAnime(offset);
           }
@@ -108,7 +110,7 @@ const AnimeHome = () => {
       }
     };
     fetchAnime();
-  }, [searchQuery, offset]);
+  }, [searchQuery, filterMode, offset]);
 
   // Rotating slide interval every 5 seconds
   useEffect(() => {
@@ -119,25 +121,14 @@ const AnimeHome = () => {
     return () => clearInterval(interval);
   }, [searchQuery, filterMode]);
 
-  const slide = ANIME_BILLBOARD_SLIDES[currentSlide];
-
-  const handleLoadMore = () => {
-    if (!isLoadingMore && hasMore) {
-      setOffset(prev => prev + 24);
-    }
-  };
-
   return (
     <div className="anime-home animate-fade-in">
-      {/* Dynamic Widescreen Billboard */}
       {!searchQuery && (
         <PopularBanner type="anime" bannerCategory={filterMode} />
       )}
 
-      {/* Top Trending Carousel */}
       <TrendingCarousel />
 
-      {/* Main Content */}
       <section className="anime-section">
         <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           <div className="section-title-group">
@@ -157,7 +148,8 @@ const AnimeHome = () => {
                   { id: 'latest', label: 'Update Terbaru' },
                   { id: 'popular', label: 'Populer' },
                   { id: 'weekly', label: 'Mingguan' },
-                  { id: 'movie', label: 'Movie' }
+                  { id: 'movie', label: 'Movie' },
+                  { id: 'all', label: 'Semua' }
                 ].map(tab => (
                   <button 
                     key={tab.id}
@@ -207,11 +199,12 @@ const AnimeHome = () => {
                 animes.map((anime) => (
                   <Link to={`/anime/${anime.id}`} key={anime.id} className="anime-card">
                     <div className="anime-cover-wrapper">
-                      <img src={anime.coverUrl} alt={anime.title} className="anime-cover" loading="lazy" />
+                      <img src={anime.coverUrl} alt={anime.title || anime.name} className="anime-cover" loading="lazy" />
                       <div className="anime-overlay">
                         <div className="play-icon-wrapper">
                           <Play fill="white" size={24} />
                         </div>
+                        <SpeedUpButton animeId={anime.id} />
                       </div>
                       {anime.score && <div className="anime-score">★ {anime.score}</div>}
                       {anime.episodes && (
@@ -221,7 +214,7 @@ const AnimeHome = () => {
                       )}
                     </div>
                     <div className="anime-info">
-                      <h3 className="anime-title">{anime.title}</h3>
+                      <h3 className="anime-title">{anime.title || anime.name}</h3>
                       <div className="anime-tags">
                         {anime.tags && anime.tags.slice(0, 2).map((tag, i) => (
                           <span key={i} className="anime-tag">{tag}</span>
@@ -238,36 +231,25 @@ const AnimeHome = () => {
               )}
             </div>
 
-            {/* Premium Load More Controls */}
             {hasMore && animes.length > 0 && (
               <div className="load-more-container" style={{ display: 'flex', justifyContent: 'center', margin: '40px 0 20px' }}>
                 <button 
                   className="load-more-btn"
-                  onClick={handleLoadMore}
+                  onClick={() => setOffset(prev => prev + 24)}
                   disabled={isLoadingMore}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
+                    background: 'var(--accent-primary, #6366f1)',
                     color: '#fff',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    padding: '12px 35px',
-                    borderRadius: '50px',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 24px',
                     fontSize: '0.95rem',
-                    fontWeight: '700',
+                    fontWeight: '600',
                     cursor: 'pointer',
-                    transition: 'all 0.25s ease',
-                    backdropFilter: 'blur(10px)',
-                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+                    transition: 'transform 0.2s',
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.16)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                  }}
+                  onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-2px)')}
+                  onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
                 >
                   {isLoadingMore ? 'Memuat...' : 'Muat Lebih Banyak Anime'}
                 </button>

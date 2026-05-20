@@ -88,6 +88,26 @@ export const animeSourceManager = {
     }
   },
 
+  getAllAnime: async (offset = 0) => {
+    try {
+      // Try backend all endpoint first
+      try {
+        const res = await axios.get(`${BACKEND_URL}/all`, { params: { offset }, timeout: 5000 });
+        if (res.data?.data?.length > 0) return { data: res.data.data, source: 'otakudesu' };
+      } catch (e) {
+        console.warn('Backend all endpoint unavailable, falling back');
+      }
+      // Fallback to Jikan – fetch full list via pagination (24 per page)
+      await jikanDelay();
+      const page = Math.floor(offset / 24) + 1;
+      const res = await axios.get(`${JIKAN_URL}/top/anime`, { params: { limit: 24, page } });
+      const jikanData = res.data.data.map(mapJikanAnime);
+      return { data: jikanData, source: 'jikan' };
+    } catch (e) {
+      console.error('getAllAnime error:', e);
+      return { data: [], source: 'fallback' };
+    }
+  },
   getMovieAnime: async (offset = 0) => {
     try {
       try {

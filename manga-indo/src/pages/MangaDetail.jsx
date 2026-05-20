@@ -32,29 +32,44 @@ const MangaDetail = () => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      try {
-        const mangaData = await sourceManager.getMangaDetail(id);
-        const chapterData = await sourceManager.getMangaChapters(id, sortOrder, LIMIT, 0);
-        
-        // Fetch MyAnimeList rating dynamically
+      
+      const tryFetch = async (useKomikcastFallback = false) => {
         try {
-          const malResults = await myAnimeList.searchManga(mangaData.title);
-          if (malResults && malResults.length > 0) {
-            mangaData.rating = malResults[0].rating;
+          if (useKomikcastFallback) {
+            sourceManager.setActiveSource('komikcast');
           }
-        } catch (e) {
-          console.warn('Failed to fetch MyAnimeList rating for manga', e);
-        }
+          const mangaData = await sourceManager.getMangaDetail(id);
+          const chapterData = await sourceManager.getMangaChapters(id, sortOrder, LIMIT, 0);
+          
+          try {
+            const malResults = await myAnimeList.searchManga(mangaData.title);
+            if (malResults && malResults.length > 0) {
+              mangaData.rating = malResults[0].rating;
+            }
+          } catch (e) {
+            console.warn('Failed to fetch MyAnimeList rating for manga', e);
+          }
 
-        setManga(mangaData);
-        setChapters(chapterData.data);
-        setTotalChapters(chapterData.total);
-        setOffset(0);
-      } catch (err) {
-        setError('Gagal memuat detail manga.');
-      } finally {
-        setLoading(false);
+          setManga(mangaData);
+          setChapters(chapterData.data);
+          setTotalChapters(chapterData.total);
+          setOffset(0);
+          return true;
+        } catch (err) {
+          console.error("Fetch detail failed", err);
+          return false;
+        }
+      };
+
+      let success = await tryFetch(false);
+      if (!success && sourceManager.getActiveSourceId() !== 'komikcast') {
+         success = await tryFetch(true);
       }
+      
+      if (!success) {
+         setError('Gagal memuat detail manga.');
+      }
+      setLoading(false);
     };
 
     fetchData();
@@ -110,7 +125,7 @@ const MangaDetail = () => {
     <div className="detail-container animate-fade-in">
       <div className="detail-header glass-panel">
         <div className="detail-cover-wrapper">
-          <img src={manga.highResCoverUrl} alt={manga.title} className="detail-cover" />
+                <img src={manga.highResCoverUrl} alt={manga.title} className="detail-cover" onError={e => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/500x700?text=No+Image'; }} />
         </div>
         <div className="detail-info">
           <h1 className="detail-title">{manga.title}</h1>

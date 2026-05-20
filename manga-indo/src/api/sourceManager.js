@@ -36,6 +36,13 @@ export const getAvailableSources = () => {
       icon: '🔥',
       description: 'Manga & Manhwa terlengkap dari WestManga.co',
       source: westmangaSource
+    },
+    {
+      id: 'komikcast',
+      name: 'Komikcast (Sub Indo)',
+      icon: '📚',
+      description: 'Manga dari Komikcast',
+      source: komikcastSource
     }
   ];
 
@@ -63,11 +70,7 @@ export const refreshSources = () => {
 
 class SourceManager {
   constructor() {
-    const savedSource = localStorage.getItem('active_source');
-    const sources = getAvailableSources();
-    this.activeSourceId = savedSource && sources.find(s => s.id === savedSource)
-      ? savedSource
-      : 'westmanga';
+    this.activeSourceId = 'westmanga';
   }
 
   getActiveSourceId() {

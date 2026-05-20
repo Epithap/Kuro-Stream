@@ -3,33 +3,58 @@ import * as cheerio from 'cheerio';
 import dns from 'dns';
 import https from 'https';
 
-// Custom DNS resolver pakai Google/Cloudflare buat bypass Internet Positif
-const { Resolver } = dns.promises;
-const resolver = new Resolver();
-resolver.setServers(['8.8.8.8', '1.1.1.1']);
+const dnsCache = {};
 
-const customLookup = async (hostname, options, callback) => {
+async function resolveDoh(hostname) {
+  if (dnsCache[hostname]) return dnsCache[hostname];
   try {
-    const addresses = await resolver.resolve4(hostname);
-    if (addresses && addresses.length > 0) {
-      if (options && options.all) {
-        callback(null, addresses.map(addr => ({ address: addr, family: 4 })));
-      } else {
-        callback(null, addresses[0], 4);
+    const response = await axios.get(`https://cloudflare-dns.com/dns-query?name=${hostname}&type=A`, {
+      headers: { 'Accept': 'application/dns-json' },
+      timeout: 5000
+    });
+    const answers = response.data?.Answer;
+    if (answers && answers.length > 0) {
+      const aRecords = answers.filter(ans => ans.type === 1).map(ans => ans.data);
+      if (aRecords.length > 0) {
+        dnsCache[hostname] = aRecords;
+        return aRecords;
       }
-    } else {
-      dns.lookup(hostname, options, callback);
     }
   } catch (err) {
-    dns.lookup(hostname, options, callback);
+    console.error(`[DNS DoH] Resolution failed for ${hostname}:`, err.message);
+  }
+  return null;
+}
+
+const customLookup = async (hostname, options, callback) => {
+  const cb = typeof options === 'function' ? options : callback;
+  const opt = typeof options === 'object' ? options : {};
+
+  if (hostname === 'cloudflare-dns.com' || hostname === 'dns.google') {
+    return dns.lookup(hostname, opt, cb);
+  }
+
+  try {
+    const addresses = await resolveDoh(hostname);
+    if (addresses && addresses.length > 0) {
+      if (opt.all) {
+        cb(null, addresses.map(addr => ({ address: addr, family: 4 })));
+      } else {
+        cb(null, addresses[0], 4);
+      }
+    } else {
+      dns.lookup(hostname, opt, cb);
+    }
+  } catch (err) {
+    dns.lookup(hostname, opt, cb);
   }
 };
 
-const httpsAgent = process.env.VERCEL ? undefined : new https.Agent({ lookup: customLookup });
+const httpsAgent = process.env.VERCEL ? undefined : new https.Agent({ lookup: customLookup, rejectUnauthorized: false });
 const api = axios.create({ httpsAgent, timeout: 20000 });
 
 const HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/124.0.0.0',
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
   'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8',
   'Accept-Encoding': 'gzip, deflate, br',
@@ -41,7 +66,7 @@ const HEADERS = {
 };
 
 // Domain yang sering berganti, list prioritas
-const OTAKUDESU_DOMAIN = 'otakudesu.cloud';
+const OTAKUDESU_DOMAIN = 'otakudesu.blog';
 const SAMEHADAKU_DOMAIN = 'samehadaku.mom';
 
 const animeScraper = {
@@ -74,8 +99,8 @@ const animeScraper = {
   },
 
   // Otakudesu: Ambil popular anime
-  getPopularAnime: async () => {
-    const url = `https://${OTAKUDESU_DOMAIN}/complete-anime/`;
+  getPopularAnime: async (page = 1) => {
+    const url = page === 1 ? `https://${OTAKUDESU_DOMAIN}/complete-anime/` : `https://${OTAKUDESU_DOMAIN}/complete-anime/page/${page}/`;
     try {
       const response = await api.get(url, { headers: HEADERS });
       const $ = cheerio.load(response.data);
@@ -112,7 +137,9 @@ const animeScraper = {
 
   // Otakudesu: Search anime  
   searchAnime: async (query, page = 1) => {
-    const url = `https://${OTAKUDESU_DOMAIN}/?s=${encodeURIComponent(query)}&post_type=anime`;
+    const url = page === 1 
+      ? `https://${OTAKUDESU_DOMAIN}/?s=${encodeURIComponent(query)}&post_type=anime`
+      : `https://${OTAKUDESU_DOMAIN}/page/${page}/?s=${encodeURIComponent(query)}&post_type=anime`;
     try {
       const response = await api.get(url, { headers: HEADERS });
       const $ = cheerio.load(response.data);
@@ -306,6 +333,40 @@ const animeScraper = {
       throw new Error('Failed to resolve mirror stream iframe');
     } catch (error) {
       throw new Error(`Resolve mirror error: ${error.message}`);
+    }
+  },
+
+  // Otakudesu: Ambil semua daftar anime (A-Z)
+  getAllAnime: async () => {
+    const url = `https://${OTAKUDESU_DOMAIN}/anime-list/`;
+    try {
+      const response = await api.get(url, { headers: HEADERS });
+      const $ = cheerio.load(response.data);
+      const animes = [];
+
+      $('.daftarkartun a').each((i, el) => {
+        const title = $(el).text().trim();
+        const href = $(el).attr('href') || '';
+        
+        // Filter out letter anchors
+        if (href.startsWith('#') || !href.includes('/anime/')) return;
+        
+        const slug = href.replace(/https?:\/\/[^\/]+\/anime\//, '').replace(/\/$/, '') || href.split('/').filter(Boolean).pop();
+
+        if (slug && title) {
+          animes.push({ 
+            id: slug, 
+            title, 
+            coverUrl: '',
+            status: title.toLowerCase().includes('on-going') ? 'Ongoing' : 'Completed',
+            latestEp: ''
+          });
+        }
+      });
+
+      return { data: animes, total: animes.length };
+    } catch (error) {
+      throw new Error(`Anime list error: ${error.message}`);
     }
   }
 };

@@ -139,13 +139,12 @@ app.get('/api/anime/latest', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 app.get('/api/anime/popular', async (req, res) => {
-  try { res.json(await animeScraper.getPopularAnime()); }
-  catch (e) { res.status(500).json({ error: e.message }); }
+  try {
+    const page = Math.floor((parseInt(req.query.offset) || 0) / 24) + 1;
+    res.json(await animeScraper.getPopularAnime(page));
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
-app.get('/api/anime/weekly', async (req, res) => {
-  try { res.json(await animeScraper.getWeeklyAnime()); }
-  catch (e) { res.status(500).json({ error: e.message }); }
-});
+
 app.get('/api/anime/movies', async (req, res) => {
   try {
     const page = Math.floor((parseInt(req.query.offset) || 0) / 24) + 1;

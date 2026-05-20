@@ -11,7 +11,7 @@ const MangaCard = ({ manga }) => {
   return (
     <Link to={`/manga/${manga.id}`} className="manga-card">
       <div className="manga-cover-wrapper">
-        <img src={manga.coverUrl} alt={manga.title} className="manga-cover" loading="lazy" />
+                <img src={manga.coverUrl} alt={manga.title} className="manga-cover" loading="lazy" onError={e => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/300x450?text=No+Image'; }} />
         <div className="manga-overlay">
           <div className="manga-badge">{badgeText}</div>
         </div>
