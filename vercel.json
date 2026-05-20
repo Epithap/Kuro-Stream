@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "buildCommand": "cd manga-indo && npm install && npm run build",
+  "outputDirectory": "manga-indo/dist",
+  "installCommand": "cd manga-indo && npm install",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
