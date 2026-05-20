@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { anilistSource } from '../api/sources/anilist';
 
-import BACKEND_URL from '../../config/apiConfig';
+const BACKEND_URL = import.meta.env.PROD ? '/api/anime' : 'http://localhost:3001/api/anime';
 // Fallback: Jikan API (MyAnimeList, tidak terblokir)
 const JIKAN_URL = 'https://api.jikan.moe/v4';
 

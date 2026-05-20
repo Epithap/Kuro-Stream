@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import BACKEND_URL from '../../config/apiConfig';
+const BACKEND_URL = import.meta.env.PROD ? '/api/westmanga' : 'http://localhost:3001/api/westmanga';
 
 export const westmangaSource = {
   getTrendingManga: async (limit = 20, offset = 0) => {
