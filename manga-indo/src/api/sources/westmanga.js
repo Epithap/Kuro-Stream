@@ -5,9 +5,8 @@ const BACKEND_URL = import.meta.env.PROD ? '/api/westmanga' : 'http://localhost:
 export const westmangaSource = {
   getTrendingManga: async (limit = 20, offset = 0) => {
     try {
-      const page = Math.floor((parseInt(offset) || 0) / limit) + 1;
       const response = await axios.get(`${BACKEND_URL}/latest`, {
-        params: { page, limit }
+        params: { offset, limit }
       });
       return response.data;
     } catch (error) {
@@ -19,9 +18,8 @@ export const westmangaSource = {
   // Popular manga (based on popular endpoint)
   getPopularManga: async (limit = 20, offset = 0) => {
     try {
-      const page = Math.floor((parseInt(offset) || 0) / limit) + 1;
       const response = await axios.get(`${BACKEND_URL}/popular`, {
-        params: { page, limit }
+        params: { offset, limit }
       });
       return response.data;
     } catch (error) {
@@ -33,7 +31,7 @@ export const westmangaSource = {
   searchManga: async (title, limit = 20, offset = 0) => {
     try {
       const response = await axios.get(`${BACKEND_URL}/search`, {
-        params: { q: title, limit, offset }
+        params: { q: title, offset, limit }
       });
       return response.data;
     } catch (error) {

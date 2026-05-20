@@ -69,35 +69,51 @@ const Home = () => {
         setLoadingMore(true);
       }
       setError(null);
-      try {
-        let data;
-        if (searchQuery) {
-          data = await sourceManager.searchManga(searchQuery, 20, offset);
-        } else if (filterMode === 'popular') {
-          data = await sourceManager.getPopularManga(20, offset);
-        } else {
-          data = await sourceManager.getTrendingManga(20, offset);
+      const tryFetch = async (useKomikcastFallback = false) => {
+        try {
+          if (useKomikcastFallback) {
+            sourceManager.setActiveSource('komikcast');
+          }
+          let data;
+          if (searchQuery) {
+            data = await sourceManager.searchManga(searchQuery, 20, offset);
+          } else if (filterMode === 'popular') {
+            data = await sourceManager.getPopularManga(20, offset);
+          } else {
+            data = await sourceManager.getTrendingManga(20, offset);
+          }
+          
+          const newMangas = data.data || [];
+          if (newMangas.length < 20) {
+            setHasMore(false);
+          }
+          
+          if (offset === 0) {
+            setMangas(newMangas);
+          } else {
+            setMangas(prev => {
+              const existingIds = new Set(prev.map(m => m.id));
+              const filtered = newMangas.filter(m => !existingIds.has(m.id));
+              return [...prev, ...filtered];
+            });
+          }
+          return true;
+        } catch (err) {
+          console.error("Fetch manga list failed", err);
+          return false;
         }
-        
-        const newMangas = data.data || [];
-        if (newMangas.length < 20) {
-          setHasMore(false);
-        }
-        
-        if (offset === 0) {
-          setMangas(newMangas);
-        } else {
-          setMangas(prev => {
-            const existingIds = new Set(prev.map(m => m.id));
-            const filtered = newMangas.filter(m => !existingIds.has(m.id));
-            return [...prev, ...filtered];
-          });
-        }
-      } catch (err) {
-        setError('Gagal memuat data manga. Silakan coba lagi nanti.');
-      } finally {
-        setLoading(false);
-        setLoadingMore(false);
+      };
+
+      let success = await tryFetch(false);
+      if (!success && sourceManager.getActiveSourceId() !== 'komikcast') {
+         success = await tryFetch(true);
+      }
+      
+      if (!success) {
+         setError('Gagal memuat data manga. Silakan coba lagi nanti.');
+      }
+      setLoading(false);
+      setLoadingMore(false);
       }
     };
 
