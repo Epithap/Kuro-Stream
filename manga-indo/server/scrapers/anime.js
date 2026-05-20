@@ -25,7 +25,7 @@ const customLookup = async (hostname, options, callback) => {
   }
 };
 
-const httpsAgent = new https.Agent({ lookup: customLookup });
+const httpsAgent = process.env.VERCEL ? undefined : new https.Agent({ lookup: customLookup });
 const api = axios.create({ httpsAgent, timeout: 20000 });
 
 const HEADERS = {
@@ -41,7 +41,7 @@ const HEADERS = {
 };
 
 // Domain yang sering berganti, list prioritas
-const OTAKUDESU_DOMAIN = 'otakudesu.blog';
+const OTAKUDESU_DOMAIN = 'otakudesu.cloud';
 const SAMEHADAKU_DOMAIN = 'samehadaku.mom';
 
 const animeScraper = {
@@ -71,6 +71,43 @@ const animeScraper = {
     } catch (error) {
       throw new Error(`Anime scraper error: ${error.message}`);
     }
+  },
+
+  // Otakudesu: Ambil popular anime
+  getPopularAnime: async () => {
+    const url = `https://${OTAKUDESU_DOMAIN}/complete-anime/`;
+    try {
+      const response = await api.get(url, { headers: HEADERS });
+      const $ = cheerio.load(response.data);
+      const animes = [];
+
+      $('.venz ul li').each((i, el) => {
+        const title = $(el).find('.jdlflm').text().trim() || $(el).find('.ani-titr').text().trim();
+        const href = $(el).find('a').attr('href') || '';
+        const slug = href.replace(/https?:\/\/[^\/]+\/anime\//, '').replace(/\/$/, '') || href.split('/').filter(Boolean).pop();
+        const cover = $(el).find('img').attr('src') || $(el).find('img').attr('data-src') || '';
+        const ep = $(el).find('.epz').text().trim() || '';
+        const status = 'Completed';
+
+        if (slug && title) {
+          animes.push({ id: slug, title, coverUrl: cover, status, latestEp: ep });
+        }
+      });
+
+      return { data: animes };
+    } catch (error) {
+      throw new Error(`Anime popular error: ${error.message}`);
+    }
+  },
+
+  // Otakudesu: Ambil movie list
+  getMovieAnime: async (page = 1) => {
+    return animeScraper.searchAnime('movie', page);
+  },
+
+  // Otakudesu: Ambil weekly anime
+  getWeeklyAnime: async () => {
+    return animeScraper.getLatestAnime(1);
   },
 
   // Otakudesu: Search anime  

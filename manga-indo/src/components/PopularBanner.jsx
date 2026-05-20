@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 const AUTO_ROTATE_INTERVAL = 8000; // 8 seconds
 
 import { westmangaSource } from '../api/sources/westmanga';
+import { animeSourceManager } from '../api/animeManager';
 
 const PopularBanner = ({ type, bannerCategory = 'popular' }) => {
   const [items, setItems] = useState([]);
@@ -21,7 +22,17 @@ const PopularBanner = ({ type, bannerCategory = 'popular' }) => {
       try {
         let data;
         if (type === 'anime') {
-          data = await myAnimeList.getTrendingAnime(6);
+          let res;
+          if (bannerCategory === 'popular') {
+            res = await animeSourceManager.getPopularAnime(0);
+          } else if (bannerCategory === 'weekly') {
+            res = await animeSourceManager.getWeeklyAnime(0);
+          } else if (bannerCategory === 'movie') {
+            res = await animeSourceManager.getMovieAnime(0);
+          } else {
+            res = await animeSourceManager.getLatestAnime(0);
+          }
+          data = (res.data || res).slice(0, 6);
         } else {
           // Manga source handling
           if (bannerCategory === 'popular') {
@@ -44,11 +55,38 @@ const PopularBanner = ({ type, bannerCategory = 'popular' }) => {
     fetchData();
   }, [type, bannerCategory]);
 
-  // Handle slide transitions and auto trailer play
+  // Handle slide transitions and auto trailer play + dynamic trailer fetch
   useEffect(() => {
     if (type === 'anime' && items.length > 0) {
       const item = items[current];
-      setTrailerActive(!!(item && item.trailerUrl));
+      
+      if (item) {
+        if (item.trailerUrl) {
+          setTrailerActive(true);
+        } else if (item.trailerUrl !== null) {
+          // fetch it dynamically
+          animeSourceManager.searchYoutubeVideo(`${item.title} official anime trailer`).then(res => {
+            if (res && res.embedUrl) {
+              setItems(prev => {
+                const newItems = [...prev];
+                newItems[current] = { ...newItems[current], trailerUrl: res.embedUrl };
+                return newItems;
+              });
+            } else {
+              setItems(prev => {
+                const newItems = [...prev];
+                newItems[current] = { ...newItems[current], trailerUrl: null }; // mark as null so it doesn't retry
+                return newItems;
+              });
+              setTrailerActive(false);
+            }
+          }).catch(() => {
+              setTrailerActive(false);
+          });
+        } else {
+          setTrailerActive(false); // null means we already tried and failed
+        }
+      }
     } else {
       setTrailerActive(false);
     }
@@ -140,12 +178,16 @@ const PopularBanner = ({ type, bannerCategory = 'popular' }) => {
       <div className="banner-body">
         <div className="banner-content">
           <span className="banner-badge">
-            {type === 'anime' ? '🔥 POPULER ANIME' : (bannerCategory === 'popular' ? '📚 POPULER MANGA' : '🆕 UPDATE TERBARU')}
+            {type === 'anime' ? (
+               bannerCategory === 'popular' ? '🔥 POPULER ANIME' :
+               bannerCategory === 'weekly' ? '📅 JADWAL MINGGUAN' :
+               bannerCategory === 'movie' ? '🎬 MOVIE TERBARU' : '🆕 UPDATE ANIME'
+            ) : (bannerCategory === 'popular' ? '📚 POPULER MANGA' : '🆕 UPDATE TERBARU')}
           </span>
           <h1 className="banner-title">{item.title}</h1>
           <div className="banner-meta">
-            <RatingStars rating={item.rating} />
-            <span className="banner-info">{item.info}</span>
+            <RatingStars rating={item.rating || item.score || 8.5} />
+            <span className="banner-info">{item.info || item.episodes || item.status || 'Ongoing'}</span>
           </div>
           {item.synopsis && (
             <p className="banner-synopsis">{item.synopsis}</p>

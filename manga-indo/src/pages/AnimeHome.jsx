@@ -52,12 +52,14 @@ const AnimeHome = () => {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
-  // Reset list and pagination when search query changes
+  const [filterMode, setFilterMode] = useState('latest'); // 'latest', 'popular', 'weekly', 'movie'
+
+  // Reset list and pagination when search query or filter changes
   useEffect(() => {
     setAnimes([]);
     setOffset(0);
     setHasMore(true);
-  }, [searchQuery]);
+  }, [searchQuery, filterMode]);
 
   useEffect(() => {
     const fetchAnime = async () => {
@@ -72,7 +74,15 @@ const AnimeHome = () => {
         if (searchQuery) {
           result = await animeSourceManager.searchAnime(searchQuery, offset);
         } else {
-          result = await animeSourceManager.getLatestAnime(offset);
+          if (filterMode === 'popular') {
+            result = await animeSourceManager.getPopularAnime(offset);
+          } else if (filterMode === 'weekly') {
+            result = await animeSourceManager.getWeeklyAnime(offset);
+          } else if (filterMode === 'movie') {
+            result = await animeSourceManager.getMovieAnime(offset);
+          } else {
+            result = await animeSourceManager.getLatestAnime(offset);
+          }
         }
         
         const newAnimes = result.data || [];
@@ -107,7 +117,7 @@ const AnimeHome = () => {
       setCurrentSlide((prev) => (prev + 1) % ANIME_BILLBOARD_SLIDES.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [searchQuery]);
+  }, [searchQuery, filterMode]);
 
   const slide = ANIME_BILLBOARD_SLIDES[currentSlide];
 
@@ -121,7 +131,7 @@ const AnimeHome = () => {
     <div className="anime-home animate-fade-in">
       {/* Dynamic Widescreen Billboard */}
       {!searchQuery && (
-        <PopularBanner type="anime" />
+        <PopularBanner type="anime" bannerCategory={filterMode} />
       )}
 
       {/* Top Trending Carousel */}
@@ -129,18 +139,54 @@ const AnimeHome = () => {
 
       {/* Main Content */}
       <section className="anime-section">
-        <div className="section-header">
+        <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           <div className="section-title-group">
-            <Tv size={24} className="section-icon" />
+            <Tv size={24} className="section-icon text-gradient" />
             <h2 className="section-title">
-              {searchQuery ? `Hasil: "${searchQuery}"` : 'Anime Sedang Tayang'}
+              {searchQuery ? `Hasil: "${searchQuery}"` : 
+               filterMode === 'popular' ? 'Anime Populer' : 
+               filterMode === 'weekly' ? 'Jadwal Mingguan' : 
+               filterMode === 'movie' ? 'Daftar Movie' : 'Update Terbaru'}
             </h2>
           </div>
-          {source && (
-            <span className={`source-badge ${source === 'otakudesu' ? 'badge-indo' : 'badge-global'}`}>
-              {source === 'otakudesu' ? '🇮🇩 Otakudesu' : source === 'anilist' ? '🌏 AniList' : '🌏 MyAnimeList'}
-            </span>
-          )}
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+            {!searchQuery && (
+              <div className="filter-tabs" style={{ display: 'flex', gap: '6px', background: 'rgba(255,255,255,0.05)', padding: '4px', borderRadius: '8px', overflowX: 'auto' }}>
+                {[
+                  { id: 'latest', label: 'Update Terbaru' },
+                  { id: 'popular', label: 'Populer' },
+                  { id: 'weekly', label: 'Mingguan' },
+                  { id: 'movie', label: 'Movie' }
+                ].map(tab => (
+                  <button 
+                    key={tab.id}
+                    onClick={() => setFilterMode(tab.id)}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: filterMode === tab.id ? 'var(--accent-primary, #6366f1)' : 'transparent',
+                      color: filterMode === tab.id ? '#fff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontWeight: filterMode === tab.id ? '600' : '400',
+                      transition: 'all 0.2s',
+                      whiteSpace: 'nowrap',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {source && (
+              <span className={`source-badge ${source === 'otakudesu' ? 'badge-indo' : 'badge-global'}`}>
+                {source === 'otakudesu' ? '🇮🇩 Otakudesu' : source === 'anilist' ? '🌏 AniList' : '🌏 MyAnimeList'}
+              </span>
+            )}
+          </div>
         </div>
         
         {error && (

@@ -29,10 +29,10 @@ const customLookup = (hostname, options, callback) => {
     });
 };
 
-const httpsAgent = new https.Agent({ lookup: customLookup });
+const httpsAgent = process.env.VERCEL ? undefined : new https.Agent({ lookup: customLookup });
 
 // Create an axios instance with the custom agent
-const api = axios.create({ httpsAgent });
+const api = axios.create({ httpsAgent, timeout: 20000 });
 
 // URL sering berubah, update jika perlu
 const BASE_URL = 'https://komikcast.life';

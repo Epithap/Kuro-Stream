@@ -56,6 +56,56 @@ export const animeSourceManager = {
     }
   },
 
+  getPopularAnime: async (offset = 0) => {
+    try {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/popular`, { params: { offset }, timeout: 5000 });
+        if (res.data?.data?.length > 0) return { data: res.data.data, source: 'otakudesu' };
+      } catch (e) {
+        console.warn('Backend unavailable, falling back');
+      }
+      await jikanDelay();
+      const page = Math.floor(offset / 24) + 1;
+      const res = await axios.get(`${JIKAN_URL}/top/anime`, { params: { limit: 24, page } });
+      const jikanData = res.data.data.map(mapJikanAnime);
+      return { data: jikanData, source: 'jikan' };
+    } catch (e) {
+      return { data: [], source: 'fallback' };
+    }
+  },
+
+  getWeeklyAnime: async (offset = 0) => {
+    try {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/weekly`, { params: { offset }, timeout: 5000 });
+        if (res.data?.data?.length > 0) return { data: res.data.data, source: 'otakudesu' };
+      } catch (e) {
+        console.warn('Backend unavailable, falling back');
+      }
+      return animeSourceManager.getLatestAnime(offset);
+    } catch (e) {
+      return { data: [], source: 'fallback' };
+    }
+  },
+
+  getMovieAnime: async (offset = 0) => {
+    try {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/movies`, { params: { offset }, timeout: 5000 });
+        if (res.data?.data?.length > 0) return { data: res.data.data, source: 'otakudesu' };
+      } catch (e) {
+        console.warn('Backend unavailable, falling back');
+      }
+      await jikanDelay();
+      const page = Math.floor(offset / 24) + 1;
+      const res = await axios.get(`${JIKAN_URL}/anime`, { params: { type: 'movie', order_by: 'popularity', sort: 'asc', limit: 24, page } });
+      const jikanData = res.data.data.map(mapJikanAnime);
+      return { data: jikanData, source: 'jikan' };
+    } catch (e) {
+      return { data: [], source: 'fallback' };
+    }
+  },
+
   searchAnime: async (query, offset = 0) => {
     try {
       // Try backend search first

@@ -26,7 +26,7 @@ const customLookup = (hostname, options, callback) => {
     .catch(() => dns.lookup(hostname, opt, cb));
 };
 
-const httpsAgent = new https.Agent({ lookup: customLookup });
+const httpsAgent = process.env.VERCEL ? undefined : new https.Agent({ lookup: customLookup });
 const api = axios.create({ httpsAgent, timeout: 20000 });
 
 const API_BASE = 'https://data.mantweh.online';
