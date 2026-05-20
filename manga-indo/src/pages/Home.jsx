@@ -50,13 +50,16 @@ const Home = () => {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // Filter for Manga
+  const [filterMode, setFilterMode] = useState('latest'); // 'latest' or 'popular'
 
-  // Reset list and pagination when search query changes
+  // Reset list and pagination when search query or filter changes
   useEffect(() => {
     setMangas([]);
     setOffset(0);
     setHasMore(true);
-  }, [searchQuery]);
+  }, [searchQuery, filterMode]);
 
   useEffect(() => {
     const fetchMangas = async () => {
@@ -71,7 +74,11 @@ const Home = () => {
         if (searchQuery) {
           data = await sourceManager.searchManga(searchQuery, 20, offset);
         } else {
-          data = await sourceManager.getTrendingManga(20, offset);
+          if (filterMode === 'popular') {
+            data = await sourceManager.getPopularManga(20, offset);
+          } else {
+            data = await sourceManager.getTrendingManga(20, offset);
+          }
         }
         
         const newMangas = data.data || [];
@@ -98,7 +105,7 @@ const Home = () => {
     };
 
     fetchMangas();
-  }, [searchQuery, offset]);
+  }, [searchQuery, filterMode, offset]);
 
   // Rotating slide interval every 5 seconds
   useEffect(() => {
@@ -121,12 +128,12 @@ const Home = () => {
     <div className="home-container animate-fade-in">
       {/* Dynamic Manga Billboard */}
       {!searchQuery && (
-        <PopularBanner type="manga" />
+        <PopularBanner type="manga" bannerCategory={filterMode} />
       )}
 
       {/* Main Content */}
       <section className="manga-section">
-        <div className="section-header">
+        <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           {searchQuery ? (
             <h2 className="section-title">
               <SearchIcon className="text-gradient" />
@@ -135,8 +142,43 @@ const Home = () => {
           ) : (
             <h2 className="section-title">
               <TrendingUp className="text-gradient" />
-              Manga Trending (Sub Indo)
+              Daftar Manga (Sub Indo)
             </h2>
+          )}
+          
+          {!searchQuery && (
+            <div className="filter-tabs" style={{ display: 'flex', gap: '10px', background: 'rgba(255,255,255,0.05)', padding: '4px', borderRadius: '8px' }}>
+              <button 
+                onClick={() => setFilterMode('latest')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: filterMode === 'latest' ? 'var(--accent-primary, #6366f1)' : 'transparent',
+                  color: filterMode === 'latest' ? '#fff' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  fontWeight: filterMode === 'latest' ? '600' : '400',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Update Terbaru
+              </button>
+              <button 
+                onClick={() => setFilterMode('popular')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: filterMode === 'popular' ? 'var(--accent-primary, #6366f1)' : 'transparent',
+                  color: filterMode === 'popular' ? '#fff' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  fontWeight: filterMode === 'popular' ? '600' : '400',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Populer
+              </button>
+            </div>
           )}
         </div>
 

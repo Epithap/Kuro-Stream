@@ -1,10 +1,10 @@
 .navbar-container {
-  position: fixed;
+  position: sticky;
   top: 0;
   left: 0;
   width: 100%;
   height: var(--header-height);
-  z-index: 100;
+  z-index: 1000;
   border-radius: 0;
   border-left: none;
   border-right: none;

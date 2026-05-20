@@ -147,6 +147,9 @@ const PopularBanner = ({ type, bannerCategory = 'popular' }) => {
             <RatingStars rating={item.rating} />
             <span className="banner-info">{item.info}</span>
           </div>
+          {item.synopsis && (
+            <p className="banner-synopsis">{item.synopsis}</p>
+          )}
           <div className="banner-controls">
             <Link to={detailLink} className="banner-btn btn-play">
               <Play size={18} fill="currentColor" className="icon" />

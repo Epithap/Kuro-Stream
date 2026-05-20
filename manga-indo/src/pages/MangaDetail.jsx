@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { sourceManager } from '../api/sourceManager';
-import { BookOpen, List, Globe2, ArrowUpDown, ExternalLink, ChevronDown } from 'lucide-react';
+import { BookOpen, List, Globe2, ArrowUpDown, ExternalLink, ChevronDown, PlayCircle } from 'lucide-react';
 import { myAnimeList } from '../api/myAnimeList';
 import RatingStars from '../components/RatingStars';
+import { historyManager } from '../utils/historyManager';
 import './MangaDetail.css';
 
 const MangaDetail = () => {
@@ -20,8 +21,14 @@ const MangaDetail = () => {
   const [sortOrder, setSortOrder] = useState('desc'); // 'desc' (terbaru) atau 'asc' (lama)
   const [loadingChapters, setLoadingChapters] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [readingHistory, setReadingHistory] = useState(null);
 
   useEffect(() => {
+    // Check reading history
+    const history = historyManager.getMangaHistory(id);
+    if (history) {
+      setReadingHistory(history);
+    }
     const fetchData = async () => {
       setLoading(true);
       setError(null);
@@ -127,6 +134,20 @@ const MangaDetail = () => {
             <h3>Sinopsis</h3>
             <p>{manga.synopsis}</p>
           </div>
+          
+          {readingHistory && (
+            <div className="continue-reading" style={{ marginTop: '20px' }}>
+              <Link 
+                to={`/chapter/${readingHistory.chapterId}`} 
+                state={{ mangaId: id, mangaTitle: manga.title, chapters }}
+                className="btn-primary" 
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '8px', textDecoration: 'none' }}
+              >
+                <PlayCircle size={20} />
+                Lanjutkan Membaca (Ch. {readingHistory.chapterNum})
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
@@ -168,7 +189,13 @@ const MangaDetail = () => {
                 }
 
                 return (
-                  <Link key={chapter.id} to={`/chapter/${chapter.id}`} className="chapter-item simple-item">
+                  <Link 
+                    key={chapter.id} 
+                    to={`/chapter/${chapter.id}`} 
+                    state={{ mangaId: id, mangaTitle: manga.title, chapters, chapterNum: chapter.chapter }}
+                    className={`chapter-item simple-item ${readingHistory?.chapterId === chapter.id ? 'active-history' : ''}`}
+                    style={readingHistory?.chapterId === chapter.id ? { borderLeft: '4px solid var(--accent-primary)', background: 'rgba(99, 102, 241, 0.1)' } : {}}
+                  >
                     <div className="chapter-info-simple">
                       <span className="ch-num">{chapterText}</span>
                       <span className="ch-title">{titleText}</span>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import MangaDetail from './pages/MangaDetail';
@@ -10,11 +10,21 @@ import AnimeHome from './pages/AnimeHome';
 import AnimeDetail from './pages/AnimeDetail';
 import WatchAnime from './pages/WatchAnime';
 
-function App() {
+function Layout() {
+  const location = useLocation();
+  const isReader = location.pathname.startsWith('/chapter/');
+  const isWelcome = location.pathname === '/';
+  
   return (
-    <Router>
-      <Navbar />
-      <main className="container" style={{ paddingTop: 'calc(var(--header-height) + 20px)', paddingBottom: '40px' }}>
+    <>
+      {!isReader && <Navbar />}
+      <main 
+        className="container" 
+        style={{ 
+          paddingTop: isReader || isWelcome ? '0' : '20px', 
+          paddingBottom: '40px' 
+        }}
+      >
         <Routes>
           {/* Welcome Screen */}
           <Route path="/" element={<Welcome />} />
@@ -30,6 +40,14 @@ function App() {
           <Route path="/watch/:episodeId" element={<WatchAnime />} />
         </Routes>
       </main>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Layout />
     </Router>
   );
 }

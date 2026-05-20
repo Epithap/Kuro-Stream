@@ -98,6 +98,16 @@ class SourceManager {
     return this.getActiveSource().getTrendingManga(limit, offset);
   }
 
+  getPopularManga(limit, offset) {
+    // Only westmanga supports getPopularManga right now, but let's assume it exists or fallback
+    const source = this.getActiveSource();
+    if (source.getPopularManga) {
+      return source.getPopularManga(limit, offset);
+    }
+    // Fallback if not supported by other sources
+    return source.getTrendingManga(limit, offset);
+  }
+
   searchManga(title, limit, offset) {
     return this.getActiveSource().searchManga(title, limit, offset);
   }

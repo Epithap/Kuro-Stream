@@ -170,23 +170,92 @@ const westmangaScraper = {
     }
   },
 
+  // Cache for popular manga to avoid slow multiple search requests
+  _popularCache: {
+    data: null,
+    lastFetch: 0
+  },
+
   // Manga populer
   getPopular: async (page = 1) => {
+    // Westmanga's API doesn't have a working popular endpoint (returns latest).
+    // So we fetch popular titles from Komikcast and map them to Westmanga!
+    
+    // Check cache (valid for 1 hour)
+    if (page === 1 && westmangaScraper._popularCache.data && (Date.now() - westmangaScraper._popularCache.lastFetch < 3600000)) {
+      return { data: westmangaScraper._popularCache.data, total: westmangaScraper._popularCache.data.length, offset: 0 };
+    }
+
     try {
-      const response = await request('GET', '/api/contents', { page, per_page: 20, orderBy: 'total_views' });
-      const items = response.data || [];
-      const mangas = items.map(item => ({
-        id: item.slug,
-        title: item.title,
-        synopsis: `Tipe: ${item.country_id || 'Manga'} - Chapter ${item.lastChapters?.[0]?.number || ''}`,
-        coverUrl: item.cover,
-        highResCoverUrl: item.cover,
-        status: item.status === 'ongoing' ? 'Ongoing' : 'Completed',
-        tags: [item.country_id].filter(Boolean)
-      }));
-      return { data: mangas, total: mangas.length, offset: (page - 1) * 20 };
+      // 1. Scrape popular titles from Komikcast (which has a reliable popular week widget)
+      const komikcastRes = await axios.get('https://komikcast.life/', {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html'
+        },
+        timeout: 10000
+      });
+      
+      const popularTitles = [];
+      const html = komikcastRes.data;
+      // Extract titles using regex to avoid heavy cheerio parsing if possible, or just simple match
+      // Komikcast popular weekly usually is in .serieslist ul li .leftseries h2 a
+      const regex = /<div class="leftseries">[\s\S]*?<h2[^>]*><a[^>]*>(.*?)<\/a><\/h2>/gi;
+      let match;
+      while ((match = regex.exec(html)) !== null && popularTitles.length < 10) {
+        const title = match[1].trim();
+        if (title && !popularTitles.includes(title)) {
+          popularTitles.push(title);
+        }
+      }
+      
+      // Fallback if regex fails
+      if (popularTitles.length === 0) {
+        popularTitles.push('One Piece', 'Jujutsu Kaisen', 'Solo Leveling', 'Black Clover', 'Magic Emperor', 'Mercenary Enrollment', 'Eleceed');
+      }
+
+      // 2. Search Westmanga for these titles
+      const results = [];
+      for (const title of popularTitles.slice(0, 10)) {
+        try {
+          const searchRes = await request('GET', '/api/contents', { q: title, page: 1, per_page: 5 });
+          const items = searchRes.data || [];
+          if (items.length > 0) {
+            // Find best match or just take first
+            const item = items[0];
+            // Only add if not already in list
+            if (!results.find(r => r.id === item.slug)) {
+              results.push({
+                id: item.slug,
+                title: item.title,
+                synopsis: `Tipe: ${item.country_id || 'Manga'} - Chapter ${item.lastChapters?.[0]?.number || ''}`,
+                coverUrl: item.cover,
+                highResCoverUrl: item.cover,
+                status: item.status === 'ongoing' ? 'Ongoing' : 'Completed',
+                tags: [item.country_id].filter(Boolean)
+              });
+            }
+          }
+        } catch (e) {
+          // Skip on error
+        }
+      }
+
+      // 3. Cache and return
+      if (results.length > 0) {
+        westmangaScraper._popularCache = {
+          data: results,
+          lastFetch: Date.now()
+        };
+        return { data: results, total: results.length, offset: 0 };
+      }
+      
+      // Fallback to latest if everything failed
+      return await westmangaScraper.getLatest(page);
     } catch (e) {
-      throw new Error(`WestManga getPopular Error: ${e.message}`);
+      console.error(`WestManga getPopular Error: ${e.message}`);
+      // Fallback to latest
+      return await westmangaScraper.getLatest(page);
     }
   },
 
