@@ -5,7 +5,7 @@ import BACKEND_URL from '../../config/apiConfig';
 export const westmangaSource = {
   getTrendingManga: async (limit = 20, offset = 0) => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/latest`, {
+      const response = await axios.get(`${BACKEND_URL}/westmanga/latest`, {
         params: { offset, limit }
       });
       return response.data;
@@ -18,7 +18,7 @@ export const westmangaSource = {
   // Popular manga (based on popular endpoint)
   getPopularManga: async (limit = 20, offset = 0) => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/popular`, {
+      const response = await axios.get(`${BACKEND_URL}/westmanga/popular`, {
         params: { offset, limit }
       });
       return response.data;
@@ -30,7 +30,7 @@ export const westmangaSource = {
 
   searchManga: async (title, limit = 20, offset = 0) => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/search`, {
+      const response = await axios.get(`${BACKEND_URL}/westmanga/search`, {
         params: { q: title, offset, limit }
       });
       return response.data;
@@ -42,7 +42,7 @@ export const westmangaSource = {
 
   getMangaDetail: async (mangaId) => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/manga/${mangaId}`);
+      const response = await axios.get(`${BACKEND_URL}/westmanga/manga/${mangaId}`);
       return response.data;
     } catch (error) {
       console.error('WestManga Error:', error);
@@ -52,7 +52,7 @@ export const westmangaSource = {
 
   getMangaChapters: async (mangaId, order = 'desc', limit = 100, offset = 0) => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/manga/${mangaId}/chapters`, {
+      const response = await axios.get(`${BACKEND_URL}/westmanga/manga/${mangaId}/chapters`, {
         params: { order, limit, offset }
       });
       return response.data;
@@ -64,7 +64,7 @@ export const westmangaSource = {
 
   getChapterPages: async (chapterId) => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/chapter/${chapterId}`);
+      const response = await axios.get(`${BACKEND_URL}/westmanga/chapter/${chapterId}`);
       return response.data;
     } catch (error) {
       console.error('WestManga Error:', error);

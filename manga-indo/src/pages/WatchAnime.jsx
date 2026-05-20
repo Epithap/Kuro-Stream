@@ -1,16 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { animeSourceManager } from '../api/animeManager';
-import { ArrowLeft, ChevronLeft, ChevronRight, Play, Wifi, ExternalLink, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Play, Wifi } from 'lucide-react';
 import './WatchAnime.css';
-
-const FALLBACK_SITES = (title, ep) => [
-  { name: 'Samehadaku', url: `https://samehadaku.email/?s=${encodeURIComponent(title)}` },
-  { name: 'Anoboy',     url: `https://anoboy.app/?s=${encodeURIComponent(title)}` },
-  { name: 'Wibuku',     url: `https://wibuku.app/?s=${encodeURIComponent(title)}` },
-  { name: 'Otakudesu',  url: `https://otakudesu.blog/?s=${encodeURIComponent(title)}` },
-  { name: 'Gogoanime',  url: `https://gogoanime3.co/videos/embed/${(title||'').toLowerCase().replace(/[^a-z0-9]+/g,'-')}-episode-${ep}` },
-];
 
 const WatchAnime = () => {
   const { episodeId } = useParams();
@@ -28,18 +20,22 @@ const WatchAnime = () => {
   const [isResolving,    setIsResolving]    = useState(false);
   const [allEpisodes,    setAllEpisodes]    = useState([]);
   const [showSidebar,    setShowSidebar]    = useState(true);
-  const [isYtFallback,   setIsYtFallback]   = useState(false);
-  const [ytOriginalUrl,  setYtOriginalUrl]  = useState('');
 
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
       setEmbedUrl('');
       setQualities({});
-      setIsYtFallback(false);
-      setYtOriginalUrl('');
+
       try {
-        const data = await animeSourceManager.getEpisodeStream(episodeId);
+        const data = await animeSourceManager.getSmartEpisodeStream(episodeId, animeId, epNum);
+        let eps = [];
+        
+        if (animeId) {
+          eps = await animeSourceManager.getAnimeEpisodes(animeId);
+          setAllEpisodes(eps);
+        }
+
         if (data.embedUrl) setEmbedUrl(data.embedUrl);
         if (data.qualities && Object.keys(data.qualities).length) {
           setQualities(data.qualities);
@@ -50,10 +46,6 @@ const WatchAnime = () => {
           const def = mirrors.find(m => m.isDefault) || mirrors[0];
           if (def) setActiveMirror(def.name);
         }
-        if (animeId) {
-          const eps = await animeSourceManager.getAnimeEpisodes(animeId);
-          setAllEpisodes(eps);
-        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -61,27 +53,9 @@ const WatchAnime = () => {
       }
     };
     load();
-  }, [episodeId, animeId]);
-
-  const handleYtFallback = async () => {
-    setIsYtFallback(true);
-    setIsResolving(true);
-    try {
-      const query = `${animeTitle} Episode ${epNum} Sub Indo`;
-      const res = await animeSourceManager.searchYoutubeVideo(query);
-      if (res?.embedUrl) {
-        setEmbedUrl(res.embedUrl);
-        setYtOriginalUrl(`https://www.youtube.com/watch?v=${res.videoId}`);
-      }
-    } catch (e) {
-      console.error('Failed to load YouTube fallback:', e);
-    } finally {
-      setIsResolving(false);
-    }
-  };
+  }, [episodeId, animeId, animeTitle, epNum]);
 
   const handleMirror = async (quality, mirror) => {
-    setIsYtFallback(false);
     setSelectedQ(quality);
     setActiveMirror(mirror.name);
     setIsResolving(true);
@@ -179,23 +153,12 @@ const WatchAnime = () => {
           </div>
 
           {/* Quality + Mirror selector */}
-          {(hasQ || true) && (
-            <div className="wa-servers-panel">
+          <div className="wa-servers-panel">
               <div className="wa-panel-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Wifi size={15} />
                   <span>Server & Kualitas</span>
                 </div>
-                {isYtFallback && ytOriginalUrl && (
-                  <a
-                    href={ytOriginalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ fontSize: '12px', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'underline' }}
-                  >
-                    <ExternalLink size={12} /> Buka di YouTube
-                  </a>
-                )}
               </div>
               
               {hasQ && (
@@ -203,9 +166,8 @@ const WatchAnime = () => {
                   {Object.keys(qualities).map(q => (
                     <button
                       key={q}
-                      className={`wa-q-pill ${!isYtFallback && selectedQ === q ? 'active' : ''}`}
+                      className={`wa-q-pill ${selectedQ === q ? 'active' : ''}`}
                       onClick={() => {
-                        setIsYtFallback(false);
                         const mirrors = qualities[q] || [];
                         if (mirrors.length) handleMirror(q, mirrors[0]);
                       }}
@@ -217,54 +179,18 @@ const WatchAnime = () => {
               )}
               
               <div className="wa-mirror-row" style={{ flexWrap: 'wrap', gap: '8px' }}>
-                {hasQ && !isYtFallback && (qualities[selectedQ] || []).map((m, i) => (
+                {hasQ && (qualities[selectedQ] || []).map((m, i) => (
                   <button
                     key={i}
                     className={`wa-mirror-btn ${activeMirror === m.name ? 'active' : ''}`}
-                    onClick={() => {
-                      setIsYtFallback(false);
-                      handleMirror(selectedQ, m);
-                    }}
+                    onClick={() => handleMirror(selectedQ, m)}
                   >
                     {m.isDefault && <span className="wa-dot" />}
                     {m.name}
                   </button>
                 ))}
-                
-                <button
-                  className={`wa-mirror-btn yt-fallback-btn ${isYtFallback ? 'active' : ''}`}
-                  onClick={handleYtFallback}
-                  style={{
-                    background: isYtFallback ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'rgba(239, 68, 68, 0.1)',
-                    color: isYtFallback ? '#fff' : '#ef4444',
-                    borderColor: 'rgba(239, 68, 68, 0.3)',
-                    fontWeight: 'bold',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <span className="wa-dot" style={{ background: '#ef4444', display: isYtFallback ? 'none' : 'inline-block' }} />
-                  🔴 YouTube Fallback (Muse/Ani-One)
-                </button>
               </div>
             </div>
-          )}
-
-          {/* Fallback links */}
-          <div className="wa-fallback-panel">
-            <div className="wa-panel-title">
-              <ExternalLink size={15} />
-              <span>Link Cadangan</span>
-            </div>
-            <div className="wa-fallback-links">
-              {FALLBACK_SITES(animeTitle, epNum).map((s, i) => (
-                <a key={i} href={s.url} target="_blank" rel="noopener noreferrer" className="wa-fallback-btn">
-                  {s.name}
-                </a>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Episode sidebar */}

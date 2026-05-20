@@ -36,7 +36,7 @@ export const animeSourceManager = {
     try {
       // Try backend (Otakudesu) first
       try {
-        const res = await axios.get(`${BACKEND_URL}/latest`, { params: { offset }, timeout: 5000 });
+        const res = await axios.get(`${BACKEND_URL}/anime/latest`, { params: { offset }, timeout: 5000 });
         if (res.data?.data?.length > 0) return { data: res.data.data, source: 'otakudesu' };
       } catch (e) {
         console.warn('Backend unavailable, falling back');
@@ -59,7 +59,7 @@ export const animeSourceManager = {
   getPopularAnime: async (offset = 0) => {
     try {
       try {
-        const res = await axios.get(`${BACKEND_URL}/popular`, { params: { offset }, timeout: 5000 });
+        const res = await axios.get(`${BACKEND_URL}/anime/popular`, { params: { offset }, timeout: 5000 });
         if (res.data?.data?.length > 0) return { data: res.data.data, source: 'otakudesu' };
       } catch (e) {
         console.warn('Backend unavailable, falling back');
@@ -77,7 +77,7 @@ export const animeSourceManager = {
   getWeeklyAnime: async (offset = 0) => {
     try {
       try {
-        const res = await axios.get(`${BACKEND_URL}/weekly`, { params: { offset }, timeout: 5000 });
+        const res = await axios.get(`${BACKEND_URL}/anime/weekly`, { params: { offset }, timeout: 5000 });
         if (res.data?.data?.length > 0) return { data: res.data.data, source: 'otakudesu' };
       } catch (e) {
         console.warn('Backend unavailable, falling back');
@@ -92,7 +92,7 @@ export const animeSourceManager = {
     try {
       // Try backend all endpoint first
       try {
-        const res = await axios.get(`${BACKEND_URL}/all`, { params: { offset }, timeout: 5000 });
+        const res = await axios.get(`${BACKEND_URL}/anime/all`, { params: { offset }, timeout: 5000 });
         if (res.data?.data?.length > 0) return { data: res.data.data, source: 'otakudesu' };
       } catch (e) {
         console.warn('Backend all endpoint unavailable, falling back');
@@ -111,7 +111,7 @@ export const animeSourceManager = {
   getMovieAnime: async (offset = 0) => {
     try {
       try {
-        const res = await axios.get(`${BACKEND_URL}/movies`, { params: { offset }, timeout: 5000 });
+        const res = await axios.get(`${BACKEND_URL}/anime/movies`, { params: { offset }, timeout: 5000 });
         if (res.data?.data?.length > 0) return { data: res.data.data, source: 'otakudesu' };
       } catch (e) {
         console.warn('Backend unavailable, falling back');
@@ -130,7 +130,7 @@ export const animeSourceManager = {
     try {
       // Try backend search first
       try {
-        const res = await axios.get(`${BACKEND_URL}/search`, { params: { q: query }, timeout: 5000 });
+        const res = await axios.get(`${BACKEND_URL}/anime/search`, { params: { q: query }, timeout: 5000 });
         if (res.data?.data?.length > 0) return { data: res.data.data, source: 'otakudesu' };
       } catch (e) {
         console.warn('Backend search unavailable, falling back');
@@ -154,7 +154,7 @@ export const animeSourceManager = {
   getAnimeDetail: async (id) => {
     // Coba backend (slug-based)
     try {
-      const res = await axios.get(`${BACKEND_URL}/${id}`, { timeout: 5000 });
+      const res = await axios.get(`${BACKEND_URL}/anime/${id}`, { timeout: 5000 });
       if (res.data?.title) return { ...res.data, source: 'otakudesu' };
     } catch (e) {
       console.warn('Backend anime detail not available, using Jikan fallback');
@@ -174,7 +174,7 @@ export const animeSourceManager = {
   getAnimeEpisodes: async (id) => {
     // Try backend first
     try {
-      const res = await axios.get(`${BACKEND_URL}/${id}`, { timeout: 5000 });
+      const res = await axios.get(`${BACKEND_URL}/anime/${id}`, { timeout: 5000 });
       if (res.data?.episodes?.length > 0) return res.data.episodes;
     } catch (e) {}
 
@@ -196,16 +196,70 @@ export const animeSourceManager = {
 
   getEpisodeStream: async (episodeSlug) => {
     try {
-      const res = await axios.get(`${BACKEND_URL}/episode/${episodeSlug}`, { timeout: 5000 });
+      const res = await axios.get(`${BACKEND_URL}/anime/episode/${episodeSlug}`, { timeout: 5000 });
       return res.data;
     } catch (e) {
       return { servers: [], embedUrl: '', episodeSlug };
     }
   },
 
+  getSmartEpisodeStream: async (episodeId, animeId, epNum) => {
+    // If it's already an Otakudesu slug (not purely numeric), fetch directly
+    if (!/^\d+$/.test(episodeId) && isNaN(Number(episodeId))) {
+      return await animeSourceManager.getEpisodeStream(episodeId);
+    }
+
+    // It's a Jikan (MAL) numeric ID, so Otakudesu won't understand it. We must find the Otakudesu slug!
+    try {
+      const detail = await animeSourceManager.getAnimeDetail(animeId);
+      let otakuAnime = null;
+      
+      // 1. Try search with Japanese Title
+      if (detail.titleJP) {
+        try {
+          const s1 = await axios.get(`${BACKEND_URL}/anime/search`, { params: { q: detail.titleJP } });
+          if (s1.data?.data?.length > 0) otakuAnime = s1.data.data[0];
+        } catch (e) {}
+      }
+      
+      // 2. Try search with English/Main Title if not found
+      if (!otakuAnime && detail.title) {
+        try {
+          const s2 = await axios.get(`${BACKEND_URL}/anime/search`, { params: { q: detail.title } });
+          if (s2.data?.data?.length > 0) otakuAnime = s2.data.data[0];
+        } catch (e) {}
+      }
+
+      // If we found it on Otakudesu, fetch its episodes and match the episode number
+      if (otakuAnime && otakuAnime.id) {
+        const epsRes = await axios.get(`${BACKEND_URL}/anime/${otakuAnime.id}`);
+        const eps = epsRes.data?.episodes || [];
+        
+        // Match episode number exactly or by checking if title includes "Episode {num}"
+        const matchedEp = eps.find(e => 
+          e.episode == epNum || 
+          (e.title && e.title.toLowerCase().includes(`episode ${epNum}`)) ||
+          (e.title && e.title.toLowerCase().includes(`ep ${epNum}`))
+        );
+        
+        // Special case: If it's a movie (epNum 1 and only 1 episode), use the first one
+        const finalEp = matchedEp || (eps.length === 1 && epNum == 1 ? eps[0] : null);
+        
+        if (finalEp && finalEp.id) {
+          return await animeSourceManager.getEpisodeStream(finalEp.id);
+        }
+      }
+    } catch (e) {
+      console.error("Smart lookup failed:", e.message);
+    }
+    
+    // Fallback if not found on Otakudesu
+    return { servers: [], embedUrl: '', episodeSlug: episodeId };
+  },
+
   resolveEpisodeStream: async (episodeSlug, payload) => {
     try {
-      const res = await axios.post(`${BACKEND_URL}/resolve-stream`, { episodeSlug, payload }, { timeout: 10000 });
+      const res = await axios.post(`${BACKEND_URL}/anime/resolve-stream`, { episodeSlug, payload }, { timeout: 10000 });
       return res.data; // returns { embedUrl }
     } catch (e) {
       console.error('Failed to resolve episode stream:', e.message);

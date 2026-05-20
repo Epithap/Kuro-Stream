@@ -42,7 +42,7 @@ const BILLBOARD_SLIDES = [
 const Home = () => {
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('search');
-  
+
   const [mangas, setMangas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -50,7 +50,7 @@ const Home = () => {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
-  
+
   // Filter for Manga
   const [filterMode, setFilterMode] = useState('latest'); // 'latest' or 'popular'
 
@@ -63,31 +63,20 @@ const Home = () => {
 
   useEffect(() => {
     const fetchMangas = async () => {
-      if (offset === 0) {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
+      if (offset === 0) setLoading(true);
+      else setLoadingMore(true);
       setError(null);
-      const tryFetch = async (useKomikcastFallback = false) => {
+
+      const tryFetch = async (fallback = false) => {
         try {
-          if (useKomikcastFallback) {
-            sourceManager.setActiveSource('komikcast');
-          }
+          if (fallback) sourceManager.setActiveSource('komikcast');
           let data;
-          if (searchQuery) {
-            data = await sourceManager.searchManga(searchQuery, 20, offset);
-          } else if (filterMode === 'popular') {
-            data = await sourceManager.getPopularManga(20, offset);
-          } else {
-            data = await sourceManager.getTrendingManga(20, offset);
-          }
-          
+          if (searchQuery) data = await sourceManager.searchManga(searchQuery, 20, offset);
+          else if (filterMode === 'popular') data = await sourceManager.getPopularManga(20, offset);
+          else data = await sourceManager.getTrendingManga(20, offset);
+
           const newMangas = data.data || [];
-          if (newMangas.length < 20) {
-            setHasMore(false);
-          }
-          
+          if (newMangas.length < 20) setHasMore(false);
           if (offset === 0) {
             setMangas(newMangas);
           } else {
@@ -98,23 +87,19 @@ const Home = () => {
             });
           }
           return true;
-        } catch (err) {
-          console.error("Fetch manga list failed", err);
+        } catch (e) {
+          console.error('Fetch manga list failed', e);
           return false;
         }
       };
 
       let success = await tryFetch(false);
       if (!success && sourceManager.getActiveSourceId() !== 'komikcast') {
-         success = await tryFetch(true);
+        success = await tryFetch(true);
       }
-      
-      if (!success) {
-         setError('Gagal memuat data manga. Silakan coba lagi nanti.');
-      }
+      if (!success) setError('Gagal memuat data manga. Silakan coba lagi nanti.');
       setLoading(false);
       setLoadingMore(false);
-      }
     };
 
     fetchMangas();
@@ -158,10 +143,10 @@ const Home = () => {
               Daftar Manga (Sub Indo)
             </h2>
           )}
-          
+
           {!searchQuery && (
             <div className="filter-tabs" style={{ display: 'flex', gap: '10px', background: 'rgba(255,255,255,0.05)', padding: '4px', borderRadius: '8px' }}>
-              <button 
+              <button
                 onClick={() => setFilterMode('latest')}
                 style={{
                   padding: '8px 16px',
@@ -176,7 +161,7 @@ const Home = () => {
               >
                 Update Terbaru
               </button>
-              <button 
+              <button
                 onClick={() => setFilterMode('popular')}
                 style={{
                   padding: '8px 16px',
@@ -214,7 +199,7 @@ const Home = () => {
             {/* Premium Load More Controls */}
             {hasMore && (
               <div className="load-more-container" style={{ display: 'flex', justifyContent: 'center', margin: '40px 0 20px' }}>
-                <button 
+                <button
                   className="load-more-btn"
                   onClick={handleLoadMore}
                   disabled={loadingMore}

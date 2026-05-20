@@ -2,15 +2,15 @@
   "version": 2,
   "builds": [
     {
-      "src": "package.json",
+      "src": "manga-indo/package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+      "config": { "distDir": "manga-indo/dist" }
     }
   ],
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index.js"
+      "destination": "/server/index.js"
     },
     {
       "source": "/(.*)",
