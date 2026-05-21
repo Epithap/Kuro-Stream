@@ -2,6 +2,23 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import puppeteer from 'puppeteer-core';
 
+const getBestImageFromSrcset = (srcset) => {
+  if (!srcset || typeof srcset !== 'string') return null;
+  const candidates = srcset.split(',').map(item => item.trim()).filter(Boolean);
+  if (candidates.length === 0) return null;
+
+  let best = null;
+  candidates.forEach(item => {
+    const [url, descriptor] = item.split(/\s+/);
+    const value = descriptor ? parseInt(descriptor.replace(/[^0-9]/g, ''), 10) : 0;
+    if (!best || value > best.value) {
+      best = { url, value };
+    }
+  });
+
+  return best?.url || null;
+};
+
 // Memory cache for resolved IPs
 let tvIpCache = '104.26.8.62';
 let netIpCache = '64.31.3.234';
@@ -213,7 +230,9 @@ const doujinScraper = {
       const pages = [];
 
       $('img').each((_, el) => {
-        const src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src');
+        const srcset = $(el).attr('data-srcset') || $(el).attr('srcset');
+        const candidate = getBestImageFromSrcset(srcset);
+        const src = candidate || $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src');
         if (src && (src.includes('desu.photos') || src.includes('/storage/uploads/'))) {
           pages.push(src);
         }

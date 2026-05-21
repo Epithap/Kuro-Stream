@@ -183,7 +183,8 @@ const komikcastScraper = {
       const pages = [];
       const seenUrls = new Set();
       $('#readerarea img, #chapter_imgs img, .main-reading-area img').each((i, el) => {
-        let src = $(el).attr('data-src') || $(el).attr('src') || '';
+        const srcset = $(el).attr('data-srcset') || $(el).attr('srcset');
+        let src = getBestImageFromSrcset(srcset) || $(el).attr('data-src') || $(el).attr('src') || '';
         src = src.trim();
         if (src && !src.startsWith('data:image') && !seenUrls.has(src)) {
           seenUrls.add(src);

@@ -102,8 +102,18 @@ app.get('/api/doujin/manga/:slug/chapters', async (req, res) => {
 app.get('/api/doujin/chapter/:slug', async (req, res) => {
   try {
     const pages = await doujinScraper.getChapterPages(req.params.slug);
-    const proxied = pages.map(p => `http://localhost:3001/api/image-proxy?url=${encodeURIComponent(p)}`);
-    res.json(proxied);
+    // Return relative proxy URLs so clients (including Vercel-hosted and mobile)
+    // request images from the same origin. Use absolute URLs only if explicitly requested.
+    const relativeProxied = pages.map(p => `/api/image-proxy?url=${encodeURIComponent(p)}`);
+    if (req.query.absolute === '1') {
+      const host = req.get('x-forwarded-host') || req.get('host');
+      const protocol = req.get('x-forwarded-proto') || (req.secure ? 'https' : 'http');
+      const base = host ? `${protocol}://${host}` : `http://localhost:${PORT}`;
+      const proxied = pages.map(p => `${base}/api/image-proxy?url=${encodeURIComponent(p)}`);
+      return res.json(proxied);
+    }
+
+    return res.json(relativeProxied);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

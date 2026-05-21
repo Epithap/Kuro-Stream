@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Tv, Sparkles, ChevronRight } from 'lucide-react';
+import { BookOpen, Tv, Sparkles, ChevronRight, User, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import './Welcome.css';
 
 const MANGA_TITLES = ['Solo Leveling', 'Jujutsu Kaisen', 'One Piece', 'Berserk', 'Vinland Saga', 'Chainsaw Man'];
@@ -8,15 +9,24 @@ const ANIME_TITLES = ['Demon Slayer', 'Attack on Titan', 'Naruto', 'Bleach', 'On
 
 const Welcome = () => {
   const navigate = useNavigate();
+  const { user, userProfile, login, register, authError, loading } = useAuth();
   const [mangaIdx, setMangaIdx] = useState(0);
   const [animeIdx, setAnimeIdx] = useState(0);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [particles, setParticles] = useState([]);
+  const [authMode, setAuthMode] = useState('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
-    const mangaTimer = setInterval(() => setMangaIdx(i => (i + 1) % MANGA_TITLES.length), 2000);
-    const animeTimer = setInterval(() => setAnimeIdx(i => (i + 1) % ANIME_TITLES.length), 2300);
-    return () => { clearInterval(mangaTimer); clearInterval(animeTimer); };
+    const mangaTimer = setInterval(() => setMangaIdx((i) => (i + 1) % MANGA_TITLES.length), 2000);
+    const animeTimer = setInterval(() => setAnimeIdx((i) => (i + 1) % ANIME_TITLES.length), 2300);
+    return () => {
+      clearInterval(mangaTimer);
+      clearInterval(animeTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -36,14 +46,32 @@ const Welcome = () => {
     navigate(mode === 'manga' ? '/manga' : '/anime');
   };
 
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    try {
+      if (authMode === 'login') {
+        await login(email, password);
+      } else {
+        await register(email, password, displayName);
+      }
+      setEmail('');
+      setPassword('');
+      setDisplayName('');
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   return (
     <div className="welcome-container">
-      {/* Animated background */}
       <div className="welcome-bg">
         <div className="bg-orb orb-1" />
         <div className="bg-orb orb-2" />
         <div className="bg-orb orb-3" />
-        {particles.map(p => (
+        {particles.map((p) => (
           <div
             key={p.id}
             className="particle"
@@ -60,7 +88,6 @@ const Welcome = () => {
       </div>
 
       <div className="welcome-content">
-        {/* Header */}
         <div className="welcome-header">
           <div className="welcome-badge">
             <Sparkles size={14} />
@@ -74,11 +101,62 @@ const Welcome = () => {
           </p>
         </div>
 
+        {!user ? (
+          <div className="auth-panel glass-panel">
+            <div className="auth-header">
+              <h2>{authMode === 'login' ? 'Masuk ke Akunmu' : 'Daftar Akun Baru'}</h2>
+              <p>{authMode === 'login' ? 'Gunakan email dan password untuk mulai.' : 'Buat akun dan dapatkan kode unik pengguna.'}</p>
+            </div>
+            <form className="auth-form" onSubmit={handleAuthSubmit}>
+              <label>
+                Email
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </label>
+              <label>
+                Password
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              </label>
+              {authMode === 'register' && (
+                <label>
+                  Nama Tampilan
+                  <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+                </label>
+              )}
+              {authError && <p className="auth-error">{authError}</p>}
+              <button type="submit" className="primary-button" disabled={authLoading}>
+                {authMode === 'login' ? 'Masuk' : 'Daftar'}
+              </button>
+            </form>
+            <button className="secondary-button" onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}>
+              {authMode === 'login' ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Masuk'}
+            </button>
+          </div>
+        ) : (
+          <div className="profile-summary glass-panel">
+            <div className="profile-intro">
+              <div className="profile-avatar">
+                <User size={40} />
+              </div>
+              <div>
+                <h2>Selamat datang, {userProfile?.displayName || 'Pengguna'}</h2>
+                <p>Kode akun: <strong>{userProfile?.userCode || '00000'}</strong></p>
+                <p>Tier: {userProfile?.tier || 'karbit'} | Level: {userProfile?.level || 1}</p>
+              </div>
+            </div>
+            <div className="profile-actions">
+              <button className="primary-button" onClick={() => navigate('/profile')}>
+                Buka Profil
+              </button>
+              {userProfile?.role === 'admin' && (
+                <button className="secondary-button" onClick={() => navigate('/admin')}>
+                  Panel Admin
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
-
-        {/* Mode Cards */}
         <div className="mode-cards">
-          {/* Manga Card */}
           <div
             className={`mode-card manga-card-welcome ${hoveredCard === 'manga' ? 'hovered' : ''}`}
             onClick={() => handleSelectMode('manga')}
@@ -109,12 +187,10 @@ const Welcome = () => {
             </div>
           </div>
 
-          {/* Divider */}
           <div className="mode-divider">
             <span>ATAU</span>
           </div>
 
-          {/* Anime Card */}
           <div
             className={`mode-card anime-card-welcome ${hoveredCard === 'anime' ? 'hovered' : ''}`}
             onClick={() => handleSelectMode('anime')}

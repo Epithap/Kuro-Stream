@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, BookOpen, ChevronDown, LayoutGrid, X } from 'lucide-react';
-import { sourceManager, getAvailableSources, isDoujinUnlocked, unlockDoujin, lockDoujin, refreshSources } from '../api/sourceManager';
+import { Search, BookOpen, ChevronDown, LayoutGrid, X, UserCircle, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import { sourceManager, getAvailableSources, unlockDoujin, lockDoujin, refreshSources } from '../api/sourceManager';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -11,11 +12,10 @@ const Navbar = () => {
   const [mode, setMode] = useState('manga');
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, userProfile, logout } = useAuth();
 
-  // Handle mode change
   const handleModeChange = (newMode) => {
     setMode(newMode);
-    // Update route based on mode
     navigate(newMode === 'anime' ? '/anime' : '/manga');
   };
 
@@ -28,7 +28,7 @@ const Navbar = () => {
     if (searchQuery.trim()) {
       const path = isAnimeMode ? '/anime' : '/manga';
       navigate(`${path}?search=${encodeURIComponent(searchQuery)}`);
-      setIsMobileSearchOpen(false); // Close overlay after search
+      setIsMobileSearchOpen(false);
     }
   };
 
@@ -39,13 +39,12 @@ const Navbar = () => {
   };
 
   const currentSources = getAvailableSources();
-  const activeSource = currentSources.find(s => s.id === sourceManager.getActiveSourceId()) || currentSources[0];
+  const activeSource = currentSources.find((s) => s.id === sourceManager.getActiveSourceId()) || currentSources[0];
 
   return (
     <>
       <header className="navbar-container glass-panel">
         <div className="container navbar-content">
-          {/* Main Top Row */}
           <div className="navbar-main-row">
             <Link to={isAnimeMode ? '/anime' : '/manga'} className="brand">
               <div className="brand-icon">
@@ -57,7 +56,6 @@ const Navbar = () => {
             </Link>
 
             <div className="navbar-actions-group">
-              {/* Desktop Search */}
               <form className="search-form" onSubmit={handleSearch}>
                 <div className="search-input-wrapper">
                   <Search className="search-icon" size={18} />
@@ -71,16 +69,14 @@ const Navbar = () => {
                 </div>
               </form>
 
-              {/* Mobile Search Toggle Button */}
-              <button 
-                className="mobile-search-toggle-btn" 
+              <button
+                className="mobile-search-toggle-btn"
                 onClick={() => setIsMobileSearchOpen(true)}
                 aria-label="Open search"
               >
                 <Search size={20} />
               </button>
 
-              {/* Ganti Mode Button */}
               <button
                 className="source-btn mode-switch-btn"
                 onClick={() => navigate('/')}
@@ -90,7 +86,25 @@ const Navbar = () => {
                 <span>Mode</span>
               </button>
 
-              {/* Discreet expanding secret key input */}
+              {user ? (
+                <div className="navbar-user-group">
+                  <Link to="/profile" className="user-link">
+                    <UserCircle size={18} />
+                    <span>{userProfile?.displayName || 'Profil'}</span>
+                  </Link>
+                  {userProfile?.role === 'admin' && (
+                    <Link to="/admin" className="user-badge admin-badge">
+                      <ShieldCheck size={16} /> Admin
+                    </Link>
+                  )}
+                  <button className="logout-button" onClick={logout}>Logout</button>
+                </div>
+              ) : (
+                <Link to="/" className="user-link">
+                  <UserCircle size={18} /> Masuk
+                </Link>
+              )}
+
               <input
                 type="text"
                 placeholder=""
@@ -106,7 +120,7 @@ const Navbar = () => {
                   textAlign: 'center',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   cursor: 'default',
-                  padding: '0'
+                  padding: '0',
                 }}
                 onFocus={(e) => {
                   e.target.style.width = '70px';
@@ -143,9 +157,7 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Sub Navigation Category / Source Selection Row */}
           <div className="navbar-sub-row">
-            {/* Mode Switch (Manga / Anime) */}
             <div className="mode-switch">
               <button
                 className={`mode-btn ${mode === 'manga' ? 'active' : ''}`}
@@ -161,7 +173,6 @@ const Navbar = () => {
               </button>
             </div>
 
-            {/* Source Dropdown Selector */}
             {!isAnimeMode && (
               <div className="source-selector">
                 <button
@@ -175,7 +186,7 @@ const Navbar = () => {
 
                 {isDropdownOpen && (
                   <div className="source-dropdown">
-                    {currentSources.map(source => (
+                    {currentSources.map((source) => (
                       <button
                         key={source.id}
                         className={`source-option ${source.id === activeSource?.id ? 'active' : ''} ${source.isSecret ? 'source-secret' : ''}`}
@@ -193,7 +204,6 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* Premium Full-screen Mobile Search Overlay */}
       {isMobileSearchOpen && (
         <div className="mobile-search-overlay animate-fade-in">
           <div className="mobile-search-content">
@@ -207,9 +217,9 @@ const Navbar = () => {
                 className="mobile-search-input"
                 autoFocus
               />
-              <button 
-                type="button" 
-                className="mobile-search-close-btn" 
+              <button
+                type="button"
+                className="mobile-search-close-btn"
                 onClick={() => setIsMobileSearchOpen(false)}
                 aria-label="Close search"
               >
