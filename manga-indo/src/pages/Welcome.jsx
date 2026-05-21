@@ -9,16 +9,18 @@ const ANIME_TITLES = ['Demon Slayer', 'Attack on Titan', 'Naruto', 'Bleach', 'On
 
 const Welcome = () => {
   const navigate = useNavigate();
-  const { user, userProfile, login, register, authError, loading } = useAuth();
+  const { user } = useAuth();
   const [mangaIdx, setMangaIdx] = useState(0);
   const [animeIdx, setAnimeIdx] = useState(0);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [particles, setParticles] = useState([]);
-  const [authMode, setAuthMode] = useState('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [authLoading, setAuthLoading] = useState(false);
+
+  useEffect(() => {
+    // Redirect to dashboard if already authenticated
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     const mangaTimer = setInterval(() => setMangaIdx((i) => (i + 1) % MANGA_TITLES.length), 2000);
@@ -44,25 +46,6 @@ const Welcome = () => {
   const handleSelectMode = (mode) => {
     localStorage.setItem('nusamanga_mode', mode);
     navigate(mode === 'manga' ? '/manga' : '/anime');
-  };
-
-  const handleAuthSubmit = async (e) => {
-    e.preventDefault();
-    setAuthLoading(true);
-    try {
-      if (authMode === 'login') {
-        await login(email, password);
-      } else {
-        await register(email, password, displayName);
-      }
-      setEmail('');
-      setPassword('');
-      setDisplayName('');
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setAuthLoading(false);
-    }
   };
 
   return (
@@ -102,59 +85,17 @@ const Welcome = () => {
         </div>
 
         {!user ? (
-          <div className="auth-panel glass-panel">
-            <div className="auth-header">
-              <h2>{authMode === 'login' ? 'Masuk ke Akunmu' : 'Daftar Akun Baru'}</h2>
-              <p>{authMode === 'login' ? 'Gunakan email dan password untuk mulai.' : 'Buat akun dan dapatkan kode unik pengguna.'}</p>
-            </div>
-            <form className="auth-form" onSubmit={handleAuthSubmit}>
-              <label>
-                Email
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              </label>
-              <label>
-                Password
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-              </label>
-              {authMode === 'register' && (
-                <label>
-                  Nama Tampilan
-                  <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-                </label>
-              )}
-              {authError && <p className="auth-error">{authError}</p>}
-              <button type="submit" className="primary-button" disabled={authLoading}>
-                {authMode === 'login' ? 'Masuk' : 'Daftar'}
-              </button>
-            </form>
-            <button className="secondary-button" onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}>
-              {authMode === 'login' ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Masuk'}
+          <div className="action-buttons">
+            <button className="primary-button auth-btn" onClick={() => navigate('/login?mode=login')}>
+              <span>Masuk ke Akun</span>
+              <ChevronRight size={18} />
+            </button>
+            <button className="secondary-button auth-btn" onClick={() => navigate('/login?mode=register')}>
+              <span>Buat Akun Baru</span>
+              <ChevronRight size={18} />
             </button>
           </div>
-        ) : (
-          <div className="profile-summary glass-panel">
-            <div className="profile-intro">
-              <div className="profile-avatar">
-                <User size={40} />
-              </div>
-              <div>
-                <h2>Selamat datang, {userProfile?.displayName || 'Pengguna'}</h2>
-                <p>Kode akun: <strong>{userProfile?.userCode || '00000'}</strong></p>
-                <p>Tier: {userProfile?.tier || 'karbit'} | Level: {userProfile?.level || 1}</p>
-              </div>
-            </div>
-            <div className="profile-actions">
-              <button className="primary-button" onClick={() => navigate('/profile')}>
-                Buka Profil
-              </button>
-              {userProfile?.role === 'admin' && (
-                <button className="secondary-button" onClick={() => navigate('/admin')}>
-                  Panel Admin
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+        ) : null}
 
         <div className="mode-cards">
           <div

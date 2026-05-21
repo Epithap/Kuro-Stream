@@ -305,6 +305,53 @@
   letter-spacing: 0.02em;
 }
 
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+  flex-direction: column;
+  margin: 24px 0;
+}
+
+.auth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.primary-button.auth-btn {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+}
+
+.primary-button.auth-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.4);
+}
+
+.secondary-button.auth-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.secondary-button.auth-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
 /* Responsive */
 @media (max-width: 700px) {
   .mode-cards {
