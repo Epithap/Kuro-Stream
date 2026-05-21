@@ -29,6 +29,113 @@ const mapJikanAnime = (anime) => ({
   source: 'jikan'
 });
 
+const normalizeText = (text) => {
+  return String(text || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s\-_:;,'"()\[\]{}\/]+/g, ' ')
+    .replace(/[^a-z0-9 ]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+const scoreTitleMatch = (query, title) => {
+  const normalizedQuery = normalizeText(query);
+  const normalizedTitle = normalizeText(title);
+  if (!normalizedQuery || !normalizedTitle) return 0;
+  if (normalizedTitle === normalizedQuery) return 100;
+  if (normalizedTitle.includes(normalizedQuery) || normalizedQuery.includes(normalizedTitle)) return 80;
+
+  const queryWords = new Set(normalizedQuery.split(' '));
+  const titleWords = new Set(normalizedTitle.split(' '));
+  const commonCount = [...queryWords].filter(word => titleWords.has(word)).length;
+  let score = commonCount * 10;
+  if (normalizedTitle.startsWith(normalizedQuery) || normalizedTitle.endsWith(normalizedQuery)) score += 10;
+  if (normalizedTitle.includes('sub indo') && !normalizedQuery.includes('sub indo')) score += 5;
+  return score;
+};
+
+const chooseBestOtakudesuMatch = (query, results) => {
+  if (!Array.isArray(results) || results.length === 0) return null;
+  let best = results[0];
+  let bestScore = scoreTitleMatch(query, best.title || '');
+
+  for (const result of results.slice(1)) {
+    const score = scoreTitleMatch(query, result.title || '');
+    if (score > bestScore) {
+      bestScore = score;
+      best = result;
+    }
+  }
+  return best;
+};
+
+const mergeAnimeResults = (...lists) => {
+  const seenIds = new Set();
+  const seenTitles = new Set();
+  const merged = [];
+
+  const add = (anime) => {
+    const idKey = anime.id ? String(anime.id) : null;
+    const titleKey = normalizeText(anime.title);
+
+    if (idKey && seenIds.has(idKey)) return;
+    if (titleKey && seenTitles.has(titleKey)) return;
+
+    if (idKey) seenIds.add(idKey);
+    if (titleKey) seenTitles.add(titleKey);
+
+    merged.push(anime);
+  };
+
+  for (const list of lists) {
+    if (!Array.isArray(list)) continue;
+    for (const item of list) {
+      add(item);
+    }
+  }
+  return merged;
+};
+
+const searchOtakudesuSlug = async (title, titleJP) => {
+  const candidateStrings = [];
+  if (title) {
+    candidateStrings.push(title);
+    candidateStrings.push(`${title} sub indo`);
+    candidateStrings.push(`${title} subtitle indonesia`);
+    const plainTitle = title.split(':')[0].trim();
+    if (plainTitle && plainTitle !== title) candidateStrings.push(plainTitle);
+  }
+  if (titleJP) {
+    candidateStrings.push(titleJP);
+    candidateStrings.push(`${titleJP} sub indo`);
+    candidateStrings.push(`${titleJP} subtitle indonesia`);
+  }
+
+  const seen = new Set();
+  const queries = [];
+  for (const q of candidateStrings) {
+    const normalized = normalizeText(q);
+    if (normalized && !seen.has(normalized)) {
+      seen.add(normalized);
+      queries.push(q);
+    }
+  }
+
+  for (const query of queries) {
+    try {
+      const res = await axios.get(`${BACKEND_URL}/anime/search`, { params: { q: query }, timeout: 5000 });
+      const data = res.data?.data || [];
+      if (data.length > 0) {
+        return chooseBestOtakudesuMatch(query, data);
+      }
+    } catch (e) {
+      // ignore and try next candidate
+    }
+  }
+  return null;
+};
+
 export const animeSourceManager = {
 
   getLatestAnime: async (offset = 0) => {
@@ -97,12 +204,15 @@ export const animeSourceManager = {
       } catch (e) {
         console.warn('Backend all endpoint unavailable, falling back');
       }
-      // Fallback to Jikan – fetch full list via pagination (24 per page)
+
       await jikanDelay();
       const page = Math.floor(offset / 24) + 1;
-      const res = await axios.get(`${JIKAN_URL}/top/anime`, { params: { limit: 24, page } });
+      const res = await axios.get(`${JIKAN_URL}/anime`, { params: { order_by: 'title', sort: 'asc', limit: 24, page } });
       const jikanData = res.data.data.map(mapJikanAnime);
-      return { data: jikanData, source: 'jikan' };
+      if (jikanData.length) return { data: jikanData, source: 'jikan' };
+
+      const anilistData = await anilistSource.getTrendingAnime(24, page);
+      return { data: anilistData, source: 'anilist' };
     } catch (e) {
       console.error('getAllAnime error:', e);
       return { data: [], source: 'fallback' };
@@ -110,41 +220,64 @@ export const animeSourceManager = {
   },
   getMovieAnime: async (offset = 0) => {
     try {
+      // Prefer backend movies endpoint
       try {
         const res = await axios.get(`${BACKEND_URL}/anime/movies`, { params: { offset }, timeout: 5000 });
         if (res.data?.data?.length > 0) return { data: res.data.data, source: 'otakudesu' };
       } catch (e) {
-        console.warn('Backend unavailable, falling back');
+        console.warn('Backend movies endpoint unavailable, falling back to AniList/Jikan');
       }
+
+      // Try AniList movies first (more complete metadata)
+      try {
+        const page = Math.floor(offset / 24) + 1;
+        const anilistMovies = await anilistSource.getMovies(24, page);
+        if (anilistMovies && anilistMovies.length > 0) return { data: anilistMovies, source: 'anilist' };
+      } catch (e) {
+        console.warn('AniList movies fetch failed:', e.message);
+      }
+
+      // Jikan fallback for movies
       await jikanDelay();
       const page = Math.floor(offset / 24) + 1;
       const res = await axios.get(`${JIKAN_URL}/anime`, { params: { type: 'movie', order_by: 'popularity', sort: 'asc', limit: 24, page } });
       const jikanData = res.data.data.map(mapJikanAnime);
       return { data: jikanData, source: 'jikan' };
     } catch (e) {
+      console.error('getMovieAnime error:', e);
       return { data: [], source: 'fallback' };
     }
   },
 
   searchAnime: async (query, offset = 0) => {
+    const page = Math.floor(offset / 24) + 1;
+    let backendData = null;
+
     try {
-      // Try backend search first
       try {
         const res = await axios.get(`${BACKEND_URL}/anime/search`, { params: { q: query }, timeout: 5000 });
-        if (res.data?.data?.length > 0) return { data: res.data.data, source: 'otakudesu' };
+        if (res.data?.data?.length > 0) {
+          return { data: res.data.data, source: 'otakudesu' };
+        }
       } catch (e) {
         console.warn('Backend search unavailable, falling back');
       }
-      // Jikan search fallback
+
       await jikanDelay();
-      const res = await axios.get(`${JIKAN_URL}/anime`, {
-        params: { q: query, limit: 24, order_by: 'popularity', sort: 'asc' }
-      });
-      const jikanData = res.data.data.map(mapJikanAnime);
-      if (jikanData.length) return { data: jikanData, source: 'jikan' };
-      // AniList search fallback
-      const anilistData = await anilistSource.searchAnime(query, 24);
-      return { data: anilistData, source: 'anilist' };
+      const [jikanRes, anilistData] = await Promise.all([
+        axios.get(`${JIKAN_URL}/anime`, {
+          params: { q: query, limit: 24, order_by: 'popularity', sort: 'asc', page }
+        }).catch(() => null),
+        anilistSource.searchAnime(query, 24, page).catch(() => [])
+      ]);
+
+      const jikanData = jikanRes?.data?.data?.map(mapJikanAnime) || [];
+      const mergedData = mergeAnimeResults(jikanData, anilistData);
+      if (mergedData.length) {
+        return { data: mergedData, source: 'multi' };
+      }
+
+      return { data: [], source: 'fallback' };
     } catch (e) {
       console.error('searchAnime error:', e);
       return { data: [], source: 'fallback' };
@@ -157,17 +290,32 @@ export const animeSourceManager = {
       const res = await axios.get(`${BACKEND_URL}/anime/${id}`, { timeout: 5000 });
       if (res.data?.title) return { ...res.data, source: 'otakudesu' };
     } catch (e) {
-      console.warn('Backend anime detail not available, using Jikan fallback');
+      console.warn('Backend anime detail not available, using external fallback');
     }
 
-    // Jikan fallback (numeric MAL ID)
     if (/^\d+$/.test(id)) {
-      await jikanDelay();
-      const res = await axios.get(`${JIKAN_URL}/anime/${id}`);
-      const anime = mapJikanAnime(res.data.data);
-      anime.source = 'jikan';
-      return anime;
+      // Prefer AniList metadata for numeric IDs when backend isn't available
+      try {
+        const aniDetail = await anilistSource.getAnimeDetail(id);
+        if (aniDetail) {
+          return { ...aniDetail, source: 'anilist' };
+        }
+      } catch (e) {
+        console.warn('AniList detail lookup failed:', e.message);
+      }
+
+      // Jikan fallback (numeric MAL ID)
+      try {
+        await jikanDelay();
+        const res = await axios.get(`${JIKAN_URL}/anime/${id}`);
+        const anime = mapJikanAnime(res.data.data);
+        anime.source = 'jikan';
+        return anime;
+      } catch (e) {
+        console.warn('Jikan detail lookup failed:', e.message);
+      }
     }
+
     throw new Error('Anime tidak ditemukan.');
   },
 
@@ -176,20 +324,37 @@ export const animeSourceManager = {
     try {
       const res = await axios.get(`${BACKEND_URL}/anime/${id}`, { timeout: 5000 });
       if (res.data?.episodes?.length > 0) return res.data.episodes;
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Backend episode list unavailable for', id);
+    }
 
-    // Jikan: ambil episode dari MAL (hanya metadata, bukan stream)
     if (/^\d+$/.test(id)) {
-      await jikanDelay();
       try {
+        await jikanDelay();
         const res = await axios.get(`${JIKAN_URL}/anime/${id}/episodes`);
-        return res.data.data.map(ep => ({
-          id: String(ep.mal_id),
-          title: ep.title || `Episode ${ep.mal_id}`,
-          episode: ep.mal_id,
-          aired: ep.aired
-        }));
-      } catch (e) { return []; }
+        if (res.data?.data?.length > 0) {
+          return res.data.data.map(ep => ({
+            id: String(ep.mal_id),
+            title: ep.title || `Episode ${ep.mal_id}`,
+            episode: ep.mal_id,
+            aired: ep.aired
+          }));
+        }
+      } catch (e) {
+        console.warn('Jikan episodes lookup failed:', e.message);
+      }
+
+      // If the numeric ID is not a MAL id, try resolve via AniList title and Otakudesu search
+      try {
+        const detail = await animeSourceManager.getAnimeDetail(id);
+        const otakuAnime = await searchOtakudesuSlug(detail.title, detail.titleJP);
+        if (otakuAnime?.id) {
+          const epsRes = await axios.get(`${BACKEND_URL}/anime/${otakuAnime.id}`);
+          if (epsRes.data?.episodes?.length > 0) return epsRes.data.episodes;
+        }
+      } catch (e) {
+        console.warn('Fallback Otakudesu episode lookup failed:', e.message);
+      }
     }
     return [];
   },
@@ -209,51 +374,30 @@ export const animeSourceManager = {
       return await animeSourceManager.getEpisodeStream(episodeId);
     }
 
-    // It's a Jikan (MAL) numeric ID, so Otakudesu won't understand it. We must find the Otakudesu slug!
+    // It's likely a Jikan (MAL) numeric ID or numeric episode identifier.
     try {
       const detail = await animeSourceManager.getAnimeDetail(animeId);
-      let otakuAnime = null;
-      
-      // 1. Try search with Japanese Title
-      if (detail.titleJP) {
-        try {
-          const s1 = await axios.get(`${BACKEND_URL}/anime/search`, { params: { q: detail.titleJP } });
-          if (s1.data?.data?.length > 0) otakuAnime = s1.data.data[0];
-        } catch (e) {}
-      }
-      
-      // 2. Try search with English/Main Title if not found
-      if (!otakuAnime && detail.title) {
-        try {
-          const s2 = await axios.get(`${BACKEND_URL}/anime/search`, { params: { q: detail.title } });
-          if (s2.data?.data?.length > 0) otakuAnime = s2.data.data[0];
-        } catch (e) {}
-      }
+      const otakuAnime = await searchOtakudesuSlug(detail.title, detail.titleJP);
 
-      // If we found it on Otakudesu, fetch its episodes and match the episode number
       if (otakuAnime && otakuAnime.id) {
         const epsRes = await axios.get(`${BACKEND_URL}/anime/${otakuAnime.id}`);
         const eps = epsRes.data?.episodes || [];
-        
-        // Match episode number exactly or by checking if title includes "Episode {num}"
-        const matchedEp = eps.find(e => 
-          e.episode == epNum || 
+
+        const matchedEp = eps.find(e =>
+          e.episode == epNum ||
           (e.title && e.title.toLowerCase().includes(`episode ${epNum}`)) ||
           (e.title && e.title.toLowerCase().includes(`ep ${epNum}`))
         );
-        
-        // Special case: If it's a movie (epNum 1 and only 1 episode), use the first one
-        const finalEp = matchedEp || (eps.length === 1 && epNum == 1 ? eps[0] : null);
-        
+
+        const finalEp = matchedEp || (eps.length === 1 && epNum === 1 ? eps[0] : null);
         if (finalEp && finalEp.id) {
           return await animeSourceManager.getEpisodeStream(finalEp.id);
         }
       }
     } catch (e) {
-      console.error("Smart lookup failed:", e.message);
+      console.error('Smart lookup failed:', e.message);
     }
-    
-    // Fallback if not found on Otakudesu
+
     return { servers: [], embedUrl: '', episodeSlug: episodeId };
   },
 

@@ -25,6 +25,7 @@ const mapAniListAnime = (anime) => ({
   tags: (anime.genres || []).concat(anime.tags?.map(t => t.name) || []),
   year: anime.seasonYear,
   studios: anime.studios?.nodes?.map(s => s.name) || [],
+  format: anime.format || '',
   source: 'anilist',
 });
 
@@ -78,6 +79,34 @@ export const anilistSource = {
       }
     `;
     const variables = { search, page, perPage: limit };
+    const data = await gql(query, variables);
+    const media = data?.data?.Page?.media || [];
+    return media.map(mapAniListAnime);
+  },
+
+  // Get movie list (format: MOVIE)
+  getMovies: async (limit = 24, page = 1) => {
+    const query = `
+      query ($page: Int, $perPage: Int) {
+        Page(page: $page, perPage: $perPage) {
+          media(type: ANIME, format: MOVIE, sort: POPULARITY_DESC) {
+            id
+            title { romaji english native }
+            coverImage { extraLarge large medium }
+            status
+            episodes
+            averageScore
+            description
+            genres
+            tags { name }
+            seasonYear
+            studios { nodes { name } }
+            format
+          }
+        }
+      }
+    `;
+    const variables = { page, perPage: limit };
     const data = await gql(query, variables);
     const media = data?.data?.Page?.media || [];
     return media.map(mapAniListAnime);

@@ -42,6 +42,7 @@ const BILLBOARD_SLIDES = [
 const Home = () => {
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('search');
+  const [activeSourceId, setActiveSourceId] = React.useState(sourceManager.getActiveSourceId());
 
   const [mangas, setMangas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,9 +60,13 @@ const Home = () => {
     setMangas([]);
     setOffset(0);
     setHasMore(true);
-  }, [searchQuery, filterMode]);
+  }, [searchQuery, filterMode, activeSourceId]);
 
   useEffect(() => {
+    // Subscribe to source changes
+    const unsubscribe = sourceManager.onSourceChange(() => {
+      setActiveSourceId(sourceManager.getActiveSourceId());
+    });
     const fetchMangas = async () => {
       if (offset === 0) setLoading(true);
       else setLoadingMore(true);
@@ -103,14 +108,13 @@ const Home = () => {
     };
 
     fetchMangas();
-  }, [searchQuery, filterMode, offset]);
+    return () => unsubscribe();
+  }, [searchQuery, filterMode, offset, activeSourceId]);
 
   // Rotating slide interval every 5 seconds
   useEffect(() => {
     if (searchQuery) return;
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % BILLBOARD_SLIDES.length);
-    }, 5000);
+    const interval = setInterval(() => setCurrentSlide((prev) => (prev + 1) % BILLBOARD_SLIDES.length), 5000);
     return () => clearInterval(interval);
   }, [searchQuery]);
 

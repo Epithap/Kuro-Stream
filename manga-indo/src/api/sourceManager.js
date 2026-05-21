@@ -9,23 +9,33 @@ const DOUJIN_SECRET = 'openH';
 const DOUJIN_STORAGE_KEY = 'doujin_unlocked';
 
 export const isDoujinUnlocked = () => {
-  return localStorage.getItem(DOUJIN_STORAGE_KEY) === 'true';
-};
-
-export const unlockDoujin = (code) => {
-  const clean = code.trim();
-  if (clean === DOUJIN_SECRET) {
-    localStorage.setItem(DOUJIN_STORAGE_KEY, 'true');
-    return true;
-  } else if (clean === 'lockH') {
-    localStorage.removeItem(DOUJIN_STORAGE_KEY);
-    return false;
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    return localStorage.getItem(DOUJIN_STORAGE_KEY) === 'true';
   }
   return false;
 };
 
+export const unlockDoujin = (code) => {
+  const clean = code.trim();
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    if (clean === DOUJIN_SECRET) {
+      localStorage.setItem(DOUJIN_STORAGE_KEY, 'true');
+      return true;
+    } else if (clean === 'lockH') {
+      localStorage.removeItem(DOUJIN_STORAGE_KEY);
+      return true;
+    }
+  }
+  return false;
+};
+
+// Explicit lock function used by UI controls
 export const lockDoujin = () => {
-  localStorage.removeItem(DOUJIN_STORAGE_KEY);
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    localStorage.removeItem(DOUJIN_STORAGE_KEY);
+    return true;
+  }
+  return false;
 };
 
 export const getAvailableSources = () => {
@@ -70,7 +80,15 @@ export const refreshSources = () => {
 
 class SourceManager {
   constructor() {
-    this.activeSourceId = 'westmanga';
+    // Initialize active source, preferring persisted value if available
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      const stored = localStorage.getItem('active_source');
+      this.activeSourceId = stored || 'westmanga';
+    } else {
+      this.activeSourceId = 'westmanga';
+    }
+    // Simple listener registry for source changes
+    this._listeners = [];
   }
 
   getActiveSourceId() {
@@ -82,7 +100,9 @@ class SourceManager {
     const sourceObj = sources.find(s => s.id === this.activeSourceId);
     if (!sourceObj) {
       this.activeSourceId = 'westmanga';
-      localStorage.setItem('active_source', 'westmanga');
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        localStorage.setItem('active_source', 'westmanga');
+      }
       return westmangaSource;
     }
     return sourceObj.source;
@@ -92,9 +112,26 @@ class SourceManager {
     const sources = getAvailableSources();
     if (sources.find(s => s.id === sourceId)) {
       this.activeSourceId = sourceId;
-      localStorage.setItem('active_source', sourceId);
-      window.location.reload();
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        localStorage.setItem('active_source', sourceId);
+      }
+      // Notify listeners instead of full page reload
+      this._listeners.forEach(cb => cb(sourceId));
     }
+  }
+
+  // Allow components to subscribe to source changes
+  onSourceChange(callback) {
+    if (typeof callback === 'function') {
+      this._listeners.push(callback);
+      // Return unsubscribe function
+      const unsubscribe = () => {
+        const idx = this._listeners.indexOf(callback);
+        if (idx > -1) this._listeners.splice(idx, 1);
+      };
+      return unsubscribe;
+    }
+    return () => {};
   }
 
   getTrendingManga(limit, offset) {

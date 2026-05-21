@@ -175,7 +175,7 @@ const AnimeHome = () => {
             
             {source && (
               <span className={`source-badge ${source === 'otakudesu' ? 'badge-indo' : 'badge-global'}`}>
-                {source === 'otakudesu' ? '🇮🇩 Otakudesu' : source === 'anilist' ? '🌏 AniList' : '🌏 MyAnimeList'}
+                {source === 'otakudesu' ? '🇮🇩 Otakudesu' : source === 'anilist' ? '🌏 AniList' : source === 'multi' ? '🌐 AniList + MyAnimeList' : '🌏 MyAnimeList'}
               </span>
             )}
           </div>
@@ -207,6 +207,9 @@ const AnimeHome = () => {
                         <SpeedUpButton animeId={anime.id} />
                       </div>
                       {anime.score && <div className="anime-score">★ {anime.score}</div>}
+                      {anime.format === 'MOVIE' && (
+                        <div className="anime-badge anime-badge-movie">Movie</div>
+                      )}
                       {anime.episodes && (
                         <div className="anime-episodes">
                           {typeof anime.episodes === 'number' ? `${anime.episodes} Ep` : anime.episodes}

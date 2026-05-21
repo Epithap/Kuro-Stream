@@ -140,6 +140,9 @@ const AnimeDetail = () => {
                 <span className="ad-status" style={{ '--sc': statusColor }}>
                   {anime.status || 'Unknown'}
                 </span>
+                {anime.format === 'MOVIE' && (
+                  <span className="ad-badge ad-badge-movie">Movie</span>
+                )}
                 {anime.score && (
                   <span className="ad-score">
                     <RatingStars rating={Number(anime.score)} />
@@ -220,6 +223,16 @@ const AnimeDetail = () => {
       )}
 
       {/* Episode List */}
+      {episodes.length === 0 && (
+        <div className="ad-empty-episodes glass-panel">
+          <h3>Streaming tidak tersedia</h3>
+          <p>
+            Data anime lengkap tersedia, tetapi daftar episode atau sumber streaming belum dapat ditemukan.
+            Coba kembali lagi nanti atau gunakan menu pencarian untuk mencari judul dengan sumber Otakudesu.
+          </p>
+        </div>
+      )}
+
       {episodes.length > 0 && (
         <div className="ad-episodes">
           <div className="ad-ep-header">
