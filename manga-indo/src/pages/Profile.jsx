@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Sparkles, Award, Users, Star, ChevronRight, UserPlus, Check, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Sparkles, Award, Users, Star, ChevronRight, UserPlus, Check, AlertCircle, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Profile = () => {
@@ -9,6 +9,9 @@ const Profile = () => {
   const [friendMessage, setFriendMessage] = useState('');
   const [friendError, setFriendError] = useState('');
   const [addingFriend, setAddingFriend] = useState(false);
+
+  const dailyQuests = userProfile?.dailyQuests || [];
+  const nextQuest = dailyQuests.find((quest) => !quest.completed);
 
   if (loading) {
     return <div className="profile-page">Loading profil...</div>;
@@ -24,51 +27,103 @@ const Profile = () => {
     );
   }
 
+  const totalQuestCount = dailyQuests.length;
+  const completedQuestCount = dailyQuests.filter((quest) => quest.completed).length;
+  const progressPercent = totalQuestCount ? Math.round((completedQuestCount / totalQuestCount) * 100) : 0;
+
   return (
     <div className="profile-page">
-      <div className="profile-card glass-panel">
-        <div className="profile-header">
+      <div className="profile-hero glass-panel">
+        <div className="profile-hero-left">
+          <div className="profile-avatar-large">
+            <User size={42} />
+          </div>
           <div>
             <h1>Halo, {userProfile?.displayName || 'Pengguna'}</h1>
             <p className="profile-subtitle">Kode akun: {userProfile?.userCode || '00000'}</p>
-          </div>
-          <button className="secondary-button" onClick={logout}>Logout</button>
-        </div>
-
-        <div className="profile-summary-grid">
-          <div className="profile-summary-item">
-            <Sparkles size={20} />
-            <p>Level</p>
-            <strong>{userProfile?.level || 1}</strong>
-          </div>
-          <div className="profile-summary-item">
-            <Award size={20} />
-            <p>Exp</p>
-            <strong>{userProfile?.exp || 0}</strong>
-          </div>
-          <div className="profile-summary-item">
-            <ShieldCheck size={20} />
-            <p>Tier</p>
-            <strong>{userProfile?.tier || 'karbit'}</strong>
-          </div>
-          <div className="profile-summary-item">
-            <Star size={20} />
-            <p>Diamond</p>
-            <strong>{userProfile?.diamonds || 0}</strong>
+            <div className="profile-badges">
+              <span className="badge role-badge">{userProfile?.role || 'User'}</span>
+              <span className="badge tier-badge">{userProfile?.tier || 'karbit'}</span>
+            </div>
           </div>
         </div>
 
-        <div className="profile-actions">
+        <div className="profile-hero-right">
+          <button className="secondary-button" onClick={logout}>
+            Logout
+          </button>
+          <div className="profile-progress-card">
+            <div className="progress-label">Progress Quest Harian</div>
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
+            </div>
+            <div className="progress-details">
+              <span>{completedQuestCount}/{totalQuestCount} selesai</span>
+              <strong>{progressPercent}%</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="profile-stats-grid">
+        <div className="stat-card glass-panel">
+          <span>Level</span>
+          <strong>{userProfile?.level || 1}</strong>
+        </div>
+        <div className="stat-card glass-panel">
+          <span>Exp</span>
+          <strong>{userProfile?.exp || 0}</strong>
+        </div>
+        <div className="stat-card glass-panel">
+          <span>Diamond</span>
+          <strong>{userProfile?.diamonds || 0}</strong>
+        </div>
+        <div className="stat-card glass-panel">
+          <span>Title</span>
+          <strong>{userProfile?.title || 'Novice'}</strong>
+        </div>
+      </div>
+
+      <div className="profile-quests glass-panel">
+          <div className="profile-quests-header">
+            <div>
+              <h3>Quest Harian</h3>
+              <p>Reset setiap 24 jam. Kumpulkan EXP dan Diamond dari 5 quest harian.</p>
+            </div>
+            <span>{completedQuestCount}/5 selesai</span>
+          </div>
+
+          <div className="profile-quest-list">
+            {dailyQuests.map((quest) => (
+              <div
+                key={quest.id}
+                className={`profile-quest-item ${quest.completed ? 'completed' : ''}`}
+              >
+                <div>
+                  <strong>{quest.title}</strong>
+                  <p>{quest.description}</p>
+                </div>
+                <div className="profile-quest-status">
+                  <span>{quest.progress}/{quest.total}</span>
+                  <span>+{quest.rewardExp} XP</span>
+                  <span>+{quest.rewardDiamonds} Diamond</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
           <button
             className="primary-button"
-            onClick={completeQuest}
-            disabled={(userProfile?.questDailyCount || 0) >= 5}
+            onClick={() => completeQuest(nextQuest?.id)}
+            disabled={!nextQuest}
           >
-            {userProfile?.questDailyCount >= 5
-              ? 'Kuota quest harian penuh'
-              : 'Selesaikan quest harian (+20 diamond)'}
+            {nextQuest ? `Tuntaskan: ${nextQuest.title}` : 'Semua quest harian selesai'}
           </button>
-          <small>{userProfile?.questDailyCount || 0}/5 quest hari ini</small>
+          <small>
+            {nextQuest
+              ? `Quest berikutnya: ${nextQuest.title}`
+              : 'Tunggu reset 24 jam untuk quest baru.'}
+          </small>
         </div>
 
         <div className="profile-detail-row">
@@ -151,7 +206,6 @@ const Profile = () => {
             )}
           </div>
         </div>
-      </div>
 
       <div className="profile-navigation glass-panel">
         <h2>Mulai</h2>

@@ -7,7 +7,7 @@ import './Login.css';
 const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { login, register, authError } = useAuth();
+  const { login, register, authError, clearAuthError } = useAuth();
   const modeParam = searchParams.get('mode');
   const [authMode, setAuthMode] = useState(modeParam === 'register' ? 'register' : 'login');
   const [email, setEmail] = useState('');
@@ -16,16 +16,25 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showAdminButton, setShowAdminButton] = useState(false);
 
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setSuccessMessage('');
+    setShowAdminButton(false);
+    clearAuthError();
     setAuthLoading(true);
     try {
       if (authMode === 'login') {
         await login(email, password);
-        setSuccessMessage('Login berhasil! Mengalihkan...');
-        setTimeout(() => navigate('/dashboard'), 1000);
+
+        if (email.trim().toLowerCase() === 'upik@gmail.com') {
+          setSuccessMessage('Login admin berhasil! Klik tombol di bawah untuk membuka Dashboard Admin.');
+          setShowAdminButton(true);
+        } else {
+          setSuccessMessage('Login berhasil! Mengalihkan...');
+          setTimeout(() => navigate('/dashboard'), 1000);
+        }
       } else {
         await register(email, password, displayName);
         setSuccessMessage('Registrasi berhasil! Mengalihkan...');
@@ -35,7 +44,7 @@ const Login = () => {
       setPassword('');
       setDisplayName('');
     } catch (error) {
-      console.error(error);
+      console.error('Auth submit error:', error);
     } finally {
       setAuthLoading(false);
     }
@@ -44,6 +53,7 @@ const Login = () => {
   const toggleAuthMode = () => {
     setAuthMode(authMode === 'login' ? 'register' : 'login');
     setSuccessMessage('');
+    clearAuthError();
   };
 
   return (
@@ -137,6 +147,12 @@ const Login = () => {
                   required
                 />
               </div>
+              {(authMode === 'register' || authMode === 'login') &&
+                email.trim().toLowerCase() === 'upik@gmail.com' && (
+                  <div className="auth-hint">
+                    Khusus admin: masuk dengan <strong>upik@gmail.com</strong> dan password <strong>12345678</strong>.
+                  </div>
+                )}
 
               <div className="form-group">
                 <label>
@@ -149,6 +165,7 @@ const Login = () => {
                     placeholder="Masukkan password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    minLength={6}
                     required
                   />
                   <button
@@ -163,6 +180,15 @@ const Login = () => {
 
               {authError && <div className="auth-error">{authError}</div>}
               {successMessage && <div className="success-message">{successMessage}</div>}
+              {showAdminButton && (
+                <button
+                  type="button"
+                  className="submit-button secondary-button"
+                  onClick={() => navigate('/admin')}
+                >
+                  Buka Dashboard Admin
+                </button>
+              )}
 
               <button
                 type="submit"

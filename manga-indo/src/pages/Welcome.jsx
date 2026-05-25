@@ -1,18 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Tv, Sparkles, ChevronRight, User, ShieldCheck } from 'lucide-react';
+import { Sparkles, ChevronRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import './Welcome.css';
-
-const MANGA_TITLES = ['Solo Leveling', 'Jujutsu Kaisen', 'One Piece', 'Berserk', 'Vinland Saga', 'Chainsaw Man'];
-const ANIME_TITLES = ['Demon Slayer', 'Attack on Titan', 'Naruto', 'Bleach', 'One Punch Man', 'Re:Zero'];
 
 const Welcome = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [mangaIdx, setMangaIdx] = useState(0);
-  const [animeIdx, setAnimeIdx] = useState(0);
-  const [hoveredCard, setHoveredCard] = useState(null);
   const [particles, setParticles] = useState([]);
 
   useEffect(() => {
@@ -21,15 +15,6 @@ const Welcome = () => {
       navigate('/dashboard');
     }
   }, [user, navigate]);
-
-  useEffect(() => {
-    const mangaTimer = setInterval(() => setMangaIdx((i) => (i + 1) % MANGA_TITLES.length), 2000);
-    const animeTimer = setInterval(() => setAnimeIdx((i) => (i + 1) % ANIME_TITLES.length), 2300);
-    return () => {
-      clearInterval(mangaTimer);
-      clearInterval(animeTimer);
-    };
-  }, []);
 
   useEffect(() => {
     const pts = Array.from({ length: 20 }, (_, i) => ({
@@ -43,10 +28,6 @@ const Welcome = () => {
     setParticles(pts);
   }, []);
 
-  const handleSelectMode = (mode) => {
-    localStorage.setItem('nusamanga_mode', mode);
-    navigate(mode === 'manga' ? '/manga' : '/anime');
-  };
 
   return (
     <div className="welcome-container">
@@ -97,72 +78,9 @@ const Welcome = () => {
           </div>
         ) : null}
 
-        <div className="mode-cards">
-          <div
-            className={`mode-card manga-card-welcome ${hoveredCard === 'manga' ? 'hovered' : ''}`}
-            onClick={() => handleSelectMode('manga')}
-            onMouseEnter={() => setHoveredCard('manga')}
-            onMouseLeave={() => setHoveredCard(null)}
-          >
-            <div className="card-glow manga-glow" />
-            <div className="card-inner">
-              <div className="mode-icon-ring manga-ring">
-                <BookOpen size={40} />
-              </div>
-              <div className="card-text">
-                <h2>Manga Mode</h2>
-                <p>Baca ribuan manga Sub Indo</p>
-                <div className="ticker-wrapper">
-                  <span className="ticker-label">Trending: </span>
-                  <span className="ticker-value">{MANGA_TITLES[mangaIdx]}</span>
-                </div>
-              </div>
-              <div className="card-features">
-                <span className="feature-chip">📚 Sub Indo</span>
-                <span className="feature-chip">⚡ Tanpa Blokir</span>
-              </div>
-              <button className="mode-btn manga-btn">
-                <span>Mulai Membaca</span>
-                <ChevronRight size={18} />
-              </button>
-            </div>
-          </div>
-
-          <div className="mode-divider">
-            <span>ATAU</span>
-          </div>
-
-          <div
-            className={`mode-card anime-card-welcome ${hoveredCard === 'anime' ? 'hovered' : ''}`}
-            onClick={() => handleSelectMode('anime')}
-            onMouseEnter={() => setHoveredCard('anime')}
-            onMouseLeave={() => setHoveredCard(null)}
-          >
-            <div className="card-glow anime-glow" />
-            <div className="card-inner">
-              <div className="mode-icon-ring anime-ring">
-                <Tv size={40} />
-              </div>
-              <div className="card-text">
-                <h2>Anime Mode</h2>
-                <p>Tonton streaming anime favorit</p>
-                <div className="ticker-wrapper">
-                  <span className="ticker-label">Populer: </span>
-                  <span className="ticker-value">{ANIME_TITLES[animeIdx]}</span>
-                </div>
-              </div>
-              <div className="card-features">
-                <span className="feature-chip">🎌 Sub Indo</span>
-                <span className="feature-chip">📺 HD Stream</span>
-                <span className="feature-chip">🔄 Update Harian</span>
-              </div>
-              <button className="mode-btn anime-btn">
-                <span>Mulai Menonton</span>
-                <ChevronRight size={18} />
-              </button>
-            </div>
-          </div>
-        </div>
+        <p className="welcome-note">
+          Masuk atau daftar sekarang untuk menggunakan semua fitur KuroStream. Halaman utama ini hanya menampilkan panel login untuk pengalaman yang lebih bersih.
+        </p>
 
         <p className="welcome-footer">
           🚀 Ditenagai oleh scraper lokal — bebas dari blokir ISP
